@@ -1,0 +1,154 @@
+lockfileVersion: 5.4
+
+specifiers:
+  '@types/emscripten': ^1.39.6
+  katex: ^0.16.4
+  mathjax: ^3.2.2
+  typescript: ^4.9.4
+  vivagraphjs: ^0.12.0
+
+dependencies:
+  katex: 0.16.4
+  mathjax: 3.2.2
+  vivagraphjs: 0.12.0
+
+devDependencies:
+  '@types/emscripten': 1.39.6
+  typescript: 4.9.4
+
+packages:
+
+  /@types/emscripten/1.39.6:
+    resolution: {integrity: sha512-H90aoynNhhkQP6DRweEjJp5vfUVdIj7tdPLsu7pq89vODD/lcugKfZOsfgwpvM6XUewEp2N5dCg1Uf3Qe55Dcg==}
+    dev: true
+
+  /add-event-listener/0.0.1:
+    resolution: {integrity: sha512-hjRmkeDqFUWEFcDHP/Lp0Pa4MhIJk/oQX8B7lFiNrjBKHjf0q+ivCJrucY8d8UI5d0QkZgV2jGdAGXxEZcm3nA==}
+    dev: false
+
+  /commander/8.3.0:
+    resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
+    engines: {node: '>= 12'}
+    dev: false
+
+  /gintersect/0.1.0:
+    resolution: {integrity: sha512-jps8Ckj6u8yLxOYzBVJbPqvRdeHOINQgRtufaLHkunwNQcSEdZU0ejPBapSimXJEQ9mdQW4hsEUN7DfJEcTvQQ==}
+    dev: false
+
+  /katex/0.16.4:
+    resolution: {integrity: sha512-WudRKUj8yyBeVDI4aYMNxhx5Vhh2PjpzQw1GRu/LVGqL4m1AxwD1GcUp0IMbdJaf5zsjtj8ghP0DOQRYhroNkw==}
+    hasBin: true
+    dependencies:
+      commander: 8.3.0
+    dev: false
+
+  /mathjax/3.2.2:
+    resolution: {integrity: sha512-Bt+SSVU8eBG27zChVewOicYs7Xsdt40qm4+UpHyX7k0/O9NliPc+x77k1/FEsPsjKPZGJvtRZM1vO+geW0OhGw==}
+    dev: false
+
+  /ngraph.centrality/0.3.0:
+    resolution: {integrity: sha512-Qmu9dDHJAx+GAW2AMqmhaub1rINS+fHZGZJ3zPI36ENAXmVNQ/Jkq79br1sg6NUHz/pRBT9MXMuwDyYKmMt8Mw==}
+    dev: false
+
+  /ngraph.events/0.0.3:
+    resolution: {integrity: sha512-UrewofHOFk/05otBm9GD4DA3PTEY/yaElhCclmGC4IcmAYaSDRrC3lENQxJ00AzeBnz1GY2xH7Ct7AfIdhsdWA==}
+    dev: false
+
+  /ngraph.events/0.0.4:
+    resolution: {integrity: sha512-SY7MdNQoy5KyaVxg03PYCnGF6J7l4p8lEdmYm/5oIqFAmLhg0BmzZzlRqobJ0nEPT6xZlonUQbvCcXtarPZNrg==}
+    dev: false
+
+  /ngraph.expose/0.0.0:
+    resolution: {integrity: sha512-Hr88MuhgoSLVGf2aaaXcKl22Rn95duWsjRcoeJMP9PtFmYHGFw/3ctDqBf5phnIyktm0P/Quxs5EGg6xgJcZAQ==}
+    dev: false
+
+  /ngraph.forcelayout/0.5.0:
+    resolution: {integrity: sha512-qOd1S9unFLw313+l0M/Dk1MePLDUSl4h9RyOtAbo0CyeefnN4PICiRz0LOewR5WuFmQD0/RmZLpjTKu0H7LTKQ==}
+    dependencies:
+      ngraph.events: 0.0.4
+      ngraph.physics.simulator: 0.3.0
+    dev: false
+
+  /ngraph.fromjson/0.1.9:
+    resolution: {integrity: sha512-f3GLjbUq239wx4s5A0fDptj9dcNeaEIJU3gm74hWvYK7onD7sFtedP7jVHZA7UJ2FwkKgEhzbPeltv92ycuKZQ==}
+    dependencies:
+      ngraph.graph: 0.0.14
+    dev: false
+
+  /ngraph.generators/0.0.19:
+    resolution: {integrity: sha512-P3XqB1sH4zrzM6bMGTtuT/6K76Rnhf1qE8Zu7PkAvhQVCQzdLYiL2/8DwhcPLsetRJHNJv0uwpW9TpntBAqKrw==}
+    dependencies:
+      ngraph.graph: 0.0.14
+      ngraph.random: 0.1.0
+    dev: false
+
+  /ngraph.graph/0.0.14:
+    resolution: {integrity: sha512-ERTLng4KrsGbR7iLZFvg5H+zJ7V+SY8RDqZKYCnOZib5W8M5LCvcil9/8eiJcTRUIPPXW3j8hqPCdLnBvgsn/A==}
+    dependencies:
+      ngraph.events: 0.0.3
+    dev: false
+
+  /ngraph.merge/0.0.1:
+    resolution: {integrity: sha512-iXchI5xMjYzA96mee//O7I7gtd4cCakWaSTu11aMTxRDbvBK2qpDDytYg58jO3usAUkjFxBdy1gxYppKmBDuRQ==}
+    dev: false
+
+  /ngraph.physics.primitives/0.0.7:
+    resolution: {integrity: sha512-7jPm14fYcuJ9kytOVNOKxFy6r/Uu9Dnj++uT3iR9XkBcsBahn2xcYJkV6vF1bIb1fQ5XrDCRjRIOcMwEum6jwQ==}
+    dev: false
+
+  /ngraph.physics.simulator/0.3.0:
+    resolution: {integrity: sha512-ObW+HL+hQBIIdc6xG/+qrLe8qv+Sf0X3lq/l2hsjFrIwWtpRKLrSvUUoXiNIeFqRmY/C+PkGo3U+XY523lJ+Fw==}
+    dependencies:
+      ngraph.events: 0.0.3
+      ngraph.expose: 0.0.0
+      ngraph.merge: 0.0.1
+      ngraph.physics.primitives: 0.0.7
+      ngraph.quadtreebh: 0.0.4
+      ngraph.random: 0.0.1
+    dev: false
+
+  /ngraph.quadtreebh/0.0.4:
+    resolution: {integrity: sha512-xTIkWGXt5Ajnoq9VOr0xDOI9ZL+q4sPhD0Z7vxvn4MCa+l0wf43rg0C7qv0t+RIOgbQBAp0xDpn568hpXAckJA==}
+    dependencies:
+      ngraph.random: 0.0.1
+    dev: false
+
+  /ngraph.random/0.0.1:
+    resolution: {integrity: sha512-QPKU7ChXF/VrvMQxVo9aWcvXCXp98VfL4nKUteTW/olDqeUqQ61t7m+jvFb8Dj7kKvlKlnsbDA1aWLJGmm17XA==}
+    dev: false
+
+  /ngraph.random/0.1.0:
+    resolution: {integrity: sha512-KXCfzk/ZB79BxQSWMvYPGayx3Mb+7n5GPnc8SW0rwysqRV/3QxEKrLU/UVC8eGjc2SYGofqX+uhUE6IXfqR5VA==}
+    dev: false
+
+  /ngraph.tojson/0.1.4:
+    resolution: {integrity: sha512-Ii2BTqi8zBRMLH8vTc8pMUKQFJaqbgttG9DKUaazoPVpwC/ww4jyTOHe2ZKaGGZRepnGLqSZ27wZUm7n8MjIgA==}
+    dev: false
+
+  /simplesvg/0.0.10:
+    resolution: {integrity: sha512-iCVx1A/kI4U3cGPRMRQaGLbIFNDXuB8rsaAsO2mM5wYFDs/MrfmHhrSCqNbOylgt9MhhZU3uMsSQnZM853kwXQ==}
+    dependencies:
+      add-event-listener: 0.0.1
+    dev: false
+
+  /typescript/4.9.4:
+    resolution: {integrity: sha512-Uz+dTXYzxXXbsFpM86Wh3dKCxrQqUcVMxwU54orwlJjOpO3ao8L7j5lH+dWfTwgCwIuM9GQ2kvVotzYJMXTBZg==}
+    engines: {node: '>=4.2.0'}
+    hasBin: true
+    dev: true
+
+  /vivagraphjs/0.12.0:
+    resolution: {integrity: sha512-Air+vUHXAWj8NTWUnbU800yKC7SiHpCVwpKIPfDtr5436YoMd7cpg8blt6Fn9xarx+sz1osRxGHBHTaHvcsR6Q==}
+    dependencies:
+      gintersect: 0.1.0
+      ngraph.centrality: 0.3.0
+      ngraph.events: 0.0.3
+      ngraph.forcelayout: 0.5.0
+      ngraph.fromjson: 0.1.9
+      ngraph.generators: 0.0.19
+      ngraph.graph: 0.0.14
+      ngraph.merge: 0.0.1
+      ngraph.random: 0.0.1
+      ngraph.tojson: 0.1.4
+      simplesvg: 0.0.10
+    dev: false
