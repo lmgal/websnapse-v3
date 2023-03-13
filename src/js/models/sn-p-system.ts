@@ -21,9 +21,6 @@ class Neuron {
         return this.rules
     }
 
-    /** 
-     * @param rule Assume valid format
-     * */ 
     public addRule(rule: Rule){
         this.rules.push(rule)
     }
@@ -36,8 +33,10 @@ class Neuron {
     }
 }
 
+
+
 class InputNeuron {
-    private spikeTrain = new Uint8Array()
+    private spikeTrain = new Uint8Array(0)
 
     public setSpikeTrain(newSpikeTrain: Array<number>){
         this.spikeTrain = new Uint8Array(newSpikeTrain)
@@ -48,14 +47,10 @@ class InputNeuron {
     }
 }
 
-class OutputNeuron {
-    
-}
-
 export class SNPSystemModel {
-    private neurons : Array<Neuron> = []
+    private neurons : Array<InputNeuron | Neuron> = []
     private synapses : Array<Array<{to: number, weight: number}>> = []
-    
+
     public getNeurons(){
         return this.neurons
     }
