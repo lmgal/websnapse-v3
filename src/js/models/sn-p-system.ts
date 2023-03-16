@@ -33,8 +33,6 @@ class Neuron {
     }
 }
 
-
-
 class InputNeuron {
     private spikeTrain = new Uint8Array(0)
 
@@ -45,6 +43,18 @@ class InputNeuron {
     public getSpikeTrain(){
         return this.spikeTrain
     }
+
+    public getRules() : Array<Rule> {
+        return [{
+            consume: 0,
+            delay: 0,
+            language: new RegExp('a*'),
+            latex: '',
+            produce: 1
+        }]
+    }
+
+    public getSpikes = () => 0
 }
 
 export class SNPSystemModel {
