@@ -9,7 +9,7 @@
     "wasm-compile": "emcc -o dist/js/wasm/sn-p-system.js src/wasm/sn-p-system.c -msimd128 -O3 -s EXPORTED_FUNCTIONS=_getNext,_malloc,_free -s EXPORT_ES6=1 -s MODULARIZE=1 -s EXPORTED_RUNTIME_METHODS=['ccall']"
   },
   "keywords": [],
-  "author": "",
+  "authors": ["Louie Gallos", "Jose Lorenzo Sotto"],
   "license": "ISC",
   "dependencies": {
     "katex": "^0.16.4",
