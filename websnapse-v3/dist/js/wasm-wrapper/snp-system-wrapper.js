@@ -21,8 +21,10 @@ export class SNPSystemModule {
             this.getNext = instance.exports.getNext;
             this.getPrevConfigurationVector
                 = instance.exports.getPrevConfigurationVector;
+            console.log(instance);
+            console.log(this.getPrevConfigurationVector);
         }))();
         this.memory = memory;
     }
 }
-SNPSystemModule.source = '../wasm/snp-system.wasm';
+SNPSystemModule.source = 'dist/wasm/sn-p-system.wasm';

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "wasm-compile": "emcc -o dist/wasm/next.wasm src/wasm/next.c -s \"ALLOW_MEMORY_GROWTH=1\" -msimd128 -O3"
+    "start": "python -m http.server 3000",
+    "wasm-compile": "emcc -o dist/js/wasm/sn-p-system.js src/wasm/sn-p-system.c -msimd128 -O3 -s EXPORTED_FUNCTIONS=_getNext,_malloc,_free -s EXPORT_ES6=1 -s MODULARIZE=1 -s EXPORTED_RUNTIME_METHODS=['ccall']"
   },
   "keywords": [],
   "author": "",

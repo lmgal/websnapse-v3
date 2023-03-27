@@ -1,72 +1,54 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SNPSystemModel = void 0;
-class Neuron {
-    constructor(spikes) {
-        this.rules = [];
-        this.spikes = spikes;
-    }
-    setSpikes(spikes) {
-        this.spikes = spikes;
-    }
-    getSpikes() {
-        return this.spikes;
-    }
-    getRules() {
-        return this.rules;
-    }
-    /**
-     * @param rule Assume valid format
-     * */
-    addRule(rule) {
-        this.rules.push(rule);
-    }
-    getAcceptedRules(spikes) {
-        const spikeString = 'a'.repeat(spikes);
-        const acceptedRules = this.rules.map((rule, i) => rule.language.exec(spikeString) ? i : -1)
-            .filter(e => e > 0);
-        return acceptedRules;
-    }
-}
-class SNPSystemModel {
+import { INPUT_NEURON, OUTPUT_NEURON } from "./neuron.js";
+export class SNPSystemModel {
     constructor() {
         this.neurons = [];
         this.synapses = [];
     }
+    addNeuron(neuron) {
+        this.neurons.push(neuron);
+        this.synapses.push([]);
+    }
+    addSynapse(from, to, weight) {
+        if (from < 0 || from >= this.neurons.length)
+            throw new Error(`Neuron ${from} doesn't exist`);
+        if (to < 0 || to >= this.neurons.length)
+            throw new Error(`Neuron ${to} doesn't exist`);
+        this.synapses[from].push({ to, weight });
+    }
     getNeurons() {
         return this.neurons;
     }
-    /**
-     * @param rules Assume rules are valid
-     * @param spikes Initial number of spikes
-     * @param index Index where to insert neuron in array. Defaults to last
-     */
-    addNeuron(rules, spikes) {
-        const neuron = new Neuron(spikes);
-        for (const rule of rules) {
-            neuron.addRule(rule);
-        }
-        this.neurons.push(neuron);
-    }
     removeNeuron(index) {
-        if (0 < index && index < this.neurons.length)
+        if (index < 0 || index >= this.neurons.length)
             throw new Error(`Neuron ${index} doesn't exist`);
         this.neurons.splice(index, 1);
-    }
-    /**
-     *
-     * @param index Index to replace a neuron
-     * @param rules Assume rules are valid
-     * @param spikes Initial number of spikes
-     */
-    replaceNeuron(index, rules, spikes) {
-        if (0 < index && index < this.neurons.length)
-            throw new Error(`Neuron ${index} doesn't exist`);
-        const neuron = new Neuron(spikes);
-        for (const rule of rules) {
-            neuron.addRule(rule);
+        this.synapses.splice(index, 1);
+        for (const synapses of this.synapses) {
+            for (let i = 0; i < synapses.length; i++) {
+                if (synapses[i].to === index) {
+                    synapses.splice(i, 1);
+                    i--;
+                }
+                else if (synapses[i].to > index) {
+                    synapses[i].to--;
+                }
+            }
         }
-        this.neurons.splice(index, 1, neuron);
+    }
+    removeSynapse(from, to) {
+        if (from < 0 || from >= this.neurons.length)
+            throw new Error(`Neuron ${from} doesn't exist`);
+        if (to < 0 || to >= this.neurons.length)
+            throw new Error(`Neuron ${to} doesn't exist`);
+        for (let i = 0; i < this.synapses[from].length; i++) {
+            if (this.synapses[from][i].to === to) {
+                this.synapses[from].splice(i, 1);
+                return;
+            }
+        }
+    }
+    getRuleCount() {
+        return this.neurons.reduce((ruleCount, neuron) => ruleCount + neuron.getRules().length, 0);
     }
     /**
      * Generate a transposed spiking transition matrix saved inside the class object.
@@ -111,5 +93,29 @@ class SNPSystemModel {
     getInitialDelayStatusVector() {
         return new Int8Array(this.getNeurons().map(_ => 0));
     }
+    getSpikeTrainVectors() {
+        let maxTimeOfSpikeTrains = Math.max.apply(null, this.neurons
+            .filter(neuron => neuron.getType() === INPUT_NEURON)
+            .map(neuron => neuron.getSpikeTrain().length));
+        if (maxTimeOfSpikeTrains <= 0)
+            return [];
+        return Array(maxTimeOfSpikeTrains).fill(0).map((_, time) => new Int8Array(this.neurons.map(neuron => neuron.getRules().map(_ => neuron.getSpikeTrain()[time]))
+            .reduce((spikeTrainVector, spikeTrain) => spikeTrainVector.concat(spikeTrain))));
+    }
+    /**
+     * Get boolean arrays for each neuron, indicating which rules are applicable
+     * @param configurationVector
+     * @param ruleCountVector
+     */
+    getApplicableRules(configurationVector, delayStatusVector, delayedSpikingVector) {
+        return this.neurons.map((neuron, i) => {
+            if (delayStatusVector[i] > 0 || delayedSpikingVector[i] > 0)
+                return Array(neuron.getRules().length).fill(0);
+            return neuron.getApplicableRules(configurationVector[i]);
+        });
+    }
+    getOutputNeuronIndices() {
+        return new Int8Array(this.neurons.map((neuron, i) => neuron.getType() === OUTPUT_NEURON ? i : -1)
+            .filter(index => index !== -1));
+    }
 }
-exports.SNPSystemModel = SNPSystemModel;

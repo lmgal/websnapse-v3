@@ -1,16 +1,22 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseRule = void 0;
-const parseRule = (input) => {
-    const ruleRegex = new RegExp(/(a(\^[1-9][0-9]*|\+|\*)?(\(a(\^[1-9][0-9]*|\+|\*)?\)(\*|\+)?)?)(\/a(\^[1-9][0-9]*)?)?(\\to|\\rightarrow)( a(\^[1-9][0-9]*)?|\\lambda);([0-9]+)/g);
+export const parseRule = (input) => {
+    const ruleRegex = new RegExp(/^((a|\^([0-9]+|\*)|\(|\)|\+)+)(\/a(\^([1-9][0-9]*))?)?(\\to|\\rightarrow)( a(\^([1-9][0-9]*))?|\\lambda)(;([0-9]+))?$/g);
     const groups = ruleRegex.exec(input);
+    if (!groups)
+        throw new Error('Invalid rule format');
+    let language;
+    try {
+        language = new RegExp(`^${groups[1].replace('^', '').replace(/(\d)/, '{$1}')}$`);
+    }
+    catch (e) {
+        throw new Error('Invalid language: ' + groups[1]);
+    }
     return {
         latex: input,
-        language: new RegExp(input.replace(new RegExp(/\^([1-9][0-9]+)/g), '{$1}')),
-        consume: groups[7] ? Number.parseInt(groups[7].substring(1)) :
-            groups[1].substring(2) === '' ? 1 : Number.parseInt(groups[1].substring(2)),
-        produce: groups[9] === '\\lambda' ? 0 : groups[10] ? Number.parseInt(groups[10].substring(1)) : 1,
+        language: language,
+        consume: groups[6] ? Number.parseInt(groups[6]) :
+            groups[4] ? 1 :
+                groups[3] ? Number.parseInt(groups[3]) : 1,
+        produce: groups[8] === '\\lambda' ? 0 : groups[10] ? Number.parseInt(groups[10]) : 1,
         delay: groups[12] ? Number.parseInt(groups[12]) : 0
     };
 };
-exports.parseRule = parseRule;

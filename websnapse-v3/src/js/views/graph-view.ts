@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Just import VivagraphJS on the html
+import * as Viva from 'vivagraphjs'
 
 export class SvgGraphView {
     public static neuronWidth = 100

@@ -1,9 +1,6 @@
-"use strict";
 // @ts-nocheck
-// Just import VivagraphJS on the html
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SvgGraphView = void 0;
-class SvgGraphView {
+import * as Viva from 'vivagraphjs';
+export class SvgGraphView {
     constructor() {
         this.graph = Viva.Graph.graph();
         const graphics = Viva.Graph.View.svgGraphics();
@@ -109,7 +106,6 @@ class SvgGraphView {
     addNode() {
     }
 }
-exports.SvgGraphView = SvgGraphView;
 SvgGraphView.neuronWidth = 100;
 SvgGraphView.neuronHeight = 120;
 SvgGraphView.neuronRadius = 15;
