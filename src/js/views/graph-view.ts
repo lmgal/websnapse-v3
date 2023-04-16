@@ -1,11 +1,14 @@
 // @ts-nocheck
 import * as Viva from 'vivagraphjs'
+import katex from 'katex'
+import { SimulatorModel } from '../models/simulator'
+import { SNPSystemModel } from '../models/sn-p-system'
 
 export class SvgGraphView {
     public static neuronWidth = 100
     public static neuronHeight = 120
     public static neuronRadius = 15
-    public static  idealLength = 500
+    public static idealLength = 500
 
     private graph = Viva.Graph.graph()
     
@@ -73,7 +76,7 @@ export class SvgGraphView {
             gravity : 0,
         })
         
-        // Customize link (directed and dashed if spiking)
+        // Customize link
         const geom = Viva.Graph.geom()
         const marker = Viva.Graph.svg('marker')
             .attr('id', 'Triangle')
@@ -89,6 +92,14 @@ export class SvgGraphView {
         const defs = graphics.getSvgRoot().append('defs');
         defs.append(marker);
         graphics.link(function (link) {
+            // If spiking, dashed line
+            if (link.data.spiking){
+                return Viva.Graph.svg('path')
+                    .attr('stroke', 'gray')
+                    .attr('stroke-dasharray', '5, 5')
+                    .attr('marker-end', 'url(#Triangle)')
+            }
+            // Otherwise, plain line
             return Viva.Graph.svg('path')
                 .attr('stroke', 'gray')
                 .attr('marker-end', 'url(#Triangle)')
@@ -128,7 +139,56 @@ export class SvgGraphView {
         renderer.run()
     }
 
-    public addNode(){
-
+    public addNode(data: {
+        spikes?: number,
+        rules?: Array<string>,
+        delay?: number,
+        spikeTrain?: Array<number>
+    }){
+        this.graph.beginUpdate()
+        this.graph.addNode(this.graph.getNodesCount(), data)
+        this.graph.endUpdate()
     }
+
+    public editNode(id: number, data: {
+        spikes?: number,
+        rules?: Array<string>,
+        delay?: number,
+        spikeTrain?: Array<number>
+    }){
+        const node = this.graph.getNode(id)
+        if (node){
+            this.graph.beginUpdate()
+            this.graph.getNode(id).data = data
+            this.graph.endUpdate()
+        }
+    }
+
+    public removeNode(id: number){
+        this.graph.beginUpdate()
+        this.graph.removeNode(id)
+        this.graph.endUpdate()
+    }
+
+    public addEdge(from: number, to: number){
+        this.graph.beginUpdate()
+        this.graph.addLink(from, to)
+        this.graph.endUpdate()
+    }
+
+    public removeEdge(from: number, to: number){
+        this.graph.beginUpdate()
+        this.graph.removeLink(from, to)
+        this.graph.endUpdate()
+    }
+
+    public updateEdge(from: number, to: number, spiking: boolean){
+        this.graph.beginUpdate()
+        this.graph.getLink(from, to).data.spiking = spiking
+        this.graph.endUpdate()
+    }
+}
+
+export class WebGLGraphView {
+    
 }

@@ -16,7 +16,7 @@ interface SNPSystemModule extends EmscriptenModule {
         delayVectorOffset: number,
         ruleCountVectorOffset: number,
         decisionVectorOffset: number,
-        delayedSpikingVectorOffset: number,
+        delayedIndicatorVectorOffset: number,
         spikeTrainVectorOffset: number,
         ruleCount: number,
         neuronCount: number
@@ -37,7 +37,7 @@ export class SimulatorModel {
     // States
     private configurationVector! : WasmInt8Array
     private delayStatusVector! : WasmInt8Array
-    private delayedSpikingVector! : WasmInt8Array
+    private delayIndicatorVector! : WasmInt8Array
     // Input to get next config
     private decisionVector! : WasmInt8Array
     private spikeTrainVector! : WasmInt8Array
@@ -70,7 +70,7 @@ export class SimulatorModel {
 
             this.configurationVector = wasmMalloc(this.initialConfigurationVector)
             this.delayStatusVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
-            this.delayedSpikingVector = wasmMalloc(this.delayVector.data.map(_ => 0))
+            this.delayIndicatorVector = wasmMalloc(this.delayVector.data.map(_ => 0))
 
             this.decisionVector = wasmMalloc(new Int8Array(model.getRuleCount()))
             this.spikeTrainVector = wasmMalloc(new Int8Array(model.getRuleCount()))
@@ -100,7 +100,7 @@ export class SimulatorModel {
             this.delayVector.offset,
             this.ruleCountVector.offset,
             this.decisionVector.offset,
-            this.delayedSpikingVector.offset,
+            this.delayIndicatorVector.offset,
             this.spikeTrainVector.offset,
             this.decisionVector.data.length,
             this.configurationVector.data.length
@@ -139,7 +139,7 @@ export class SimulatorModel {
         return this.model.getApplicableRules(
             this.configurationVector.data, 
             this.delayStatusVector.data,
-            this.delayedSpikingVector.data,
+            this.delayIndicatorVector.data,
         )
     }
 
@@ -155,7 +155,7 @@ export class SimulatorModel {
         this.module._free(this.delayVector.offset)
         this.module._free(this.ruleCountVector.offset)
         this.module._free(this.decisionVector.offset)
-        this.module._free(this.delayedSpikingVector.offset)
+        this.module._free(this.delayIndicatorVector.offset)
         this.module._free(this.spikeTrainVector.offset)
     }
 }

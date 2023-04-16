@@ -1,0 +1,71 @@
+<html>
+    <head>
+        <script type="module" src="dist/js/test/wasm-test.js"></script>
+        <script type="text/javascript">
+            function runTest() {
+                simulator.next(new Int8Array([1, 0, 1, 0, 0, 1, 0]))
+                // t = 1
+                console.assert(simulator.configurationVector.data.every((cell, i) => {
+                    return cell === [2, 2, 1, 1][i]
+                }))
+                console.assert(simulator.delayStatusVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 0][i]
+                }))
+                console.assert(simulator.delayIndicatorVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 0, 0, 0, 0][i]
+                }))
+                simulator.next(new Int8Array([1, 0, 0, 0, 1, 1, 0]))
+
+                // t = 2
+                console.assert(simulator.configurationVector.data.every((cell, i) => {
+                    return cell === [2, 2, 1, 1][i]
+                }))
+                console.assert(simulator.delayStatusVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 0][i]
+                }))
+                console.assert(simulator.delayIndicatorVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 0, 0, 0, 0][i]
+                }))
+                simulator.next(new Int8Array([1, 0, 0, 0, 1, 0, 1]))
+
+                // t = 3
+                console.assert(simulator.configurationVector.data.every((cell, i) => {
+                    return cell === [1, 1, 1, 1][i]
+                }))
+                console.assert(simulator.delayStatusVector.data.every((cell, i) => {
+                    return cell === [0, 0, 1, 0][i]
+                }))
+                console.assert(simulator.delayIndicatorVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 0, 0, 0, 1][i]
+                }))
+                simulator.next(new Int8Array([0, 1, 0, 1, 0, 0, 0]))
+
+                // t = 4
+                console.assert(simulator.configurationVector.data.every((cell, i) => {
+                    return cell === [1, 1, 0, 1][i]
+                }))
+                console.assert(simulator.delayStatusVector.data.every((cell, i) => {
+                    return cell === [0, 1, 0, 0][i]
+                }))
+                console.assert(simulator.delayIndicatorVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 1, 0, 0, 0][i]
+                }))
+                simulator.next(new Int8Array([0, 1, 0, 0, 0, 0, 0]))
+
+                // t = 5
+                console.assert(simulator.configurationVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 2][i]
+                }))
+                console.assert(simulator.delayStatusVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 0][i]
+                }))
+                console.assert(simulator.delayIndicatorVector.data.every((cell, i) => {
+                    return cell === [0, 0, 0, 0, 0, 0, 0][i]
+                }))
+            }
+        </script>
+    </head>
+    <body>
+        <button onclick="runTest()">Run Test</button>
+    </body>
+</html>

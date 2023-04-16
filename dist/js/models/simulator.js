@@ -35,7 +35,7 @@ export class SimulatorModel {
             this.outputNeuronIndices = model.getOutputNeuronIndices();
             this.configurationVector = wasmMalloc(this.initialConfigurationVector);
             this.delayStatusVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0));
-            this.delayedSpikingVector = wasmMalloc(this.delayVector.data.map(_ => 0));
+            this.delayIndicatorVector = wasmMalloc(this.delayVector.data.map(_ => 0));
             this.decisionVector = wasmMalloc(new Int8Array(model.getRuleCount()));
             this.spikeTrainVector = wasmMalloc(new Int8Array(model.getRuleCount()));
             this.spikeTrainVectors = model.getSpikeTrainVectors();
@@ -53,7 +53,7 @@ export class SimulatorModel {
         this.delayStatusVectorStack.push(new Int8Array(this.delayStatusVector.data));
         this.decisionVector.data.set(decisionVector);
         this.spikeTrainVector.data.set((_a = this.spikeTrainVectors[this.time++]) !== null && _a !== void 0 ? _a : this.spikeTrainVector.data.fill(0));
-        this.module._getNext(this.configurationVector.offset, this.delayStatusVector.offset, this.transposedSpikingTransitionMatrix.offset, this.delayVector.offset, this.ruleCountVector.offset, this.decisionVector.offset, this.delayedSpikingVector.offset, this.spikeTrainVector.offset, this.decisionVector.data.length, this.configurationVector.data.length);
+        this.module._getNext(this.configurationVector.offset, this.delayStatusVector.offset, this.transposedSpikingTransitionMatrix.offset, this.delayVector.offset, this.ruleCountVector.offset, this.decisionVector.offset, this.delayIndicatorVector.offset, this.spikeTrainVector.offset, this.decisionVector.data.length, this.configurationVector.data.length);
         for (let i = 0; i < this.outputNeuronIndices.length; i++) {
             const index = this.outputNeuronIndices[i];
             this.outputSpikeTrains[i].push(this.configurationVector.data[index] > 0);
@@ -78,7 +78,7 @@ export class SimulatorModel {
         };
     }
     getApplicableRules() {
-        return this.model.getApplicableRules(this.configurationVector.data, this.delayStatusVector.data, this.delayedSpikingVector.data);
+        return this.model.getApplicableRules(this.configurationVector.data, this.delayStatusVector.data, this.delayIndicatorVector.data);
     }
     reset() {
         this.configurationVector.data.set(this.initialConfigurationVector);
@@ -91,7 +91,7 @@ export class SimulatorModel {
         this.module._free(this.delayVector.offset);
         this.module._free(this.ruleCountVector.offset);
         this.module._free(this.decisionVector.offset);
-        this.module._free(this.delayedSpikingVector.offset);
+        this.module._free(this.delayIndicatorVector.offset);
         this.module._free(this.spikeTrainVector.offset);
     }
 }

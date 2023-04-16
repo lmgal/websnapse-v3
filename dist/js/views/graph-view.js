@@ -110,3 +110,5 @@ SvgGraphView.neuronWidth = 100;
 SvgGraphView.neuronHeight = 120;
 SvgGraphView.neuronRadius = 15;
 SvgGraphView.idealLength = 500;
+export class WebGLGraphView {
+}
