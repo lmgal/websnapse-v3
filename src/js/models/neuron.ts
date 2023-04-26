@@ -59,10 +59,7 @@ class Neuron {
     }
 
     public getSpikeTrain(){
-        if (this.type !== INPUT_NEURON)
-            return new Uint8Array([])
-
-        return this.spikeTrain!
+        return this.spikeTrain
     }
 
     public addRule(rule: Rule){

@@ -4,10 +4,18 @@ import { INPUT_NEURON, OUTPUT_NEURON, Neuron } from "./neuron.js"
 export class SNPSystemModel {
     private neurons : Array<Neuron> = []
     private synapses : Array<Array<{to: number, weight: number}>> = []
+    // Callback functions
+    private onAddNeuron: (neuron: Neuron) => void = () => {}
+    private onRemoveNeuron: (index: number) => void = () => {}
+    private onEditNeuron: (index: number, neuron: Neuron) => void = () => {}
+    private onAddSynapse: (from: number, to: number, weight: number) => void = () => {}
+    private onRemoveSynapse: (from: number, to: number) => void = () => {}
 
     public addNeuron(neuron: Neuron){
         this.neurons.push(neuron)
         this.synapses.push([])
+
+        this.onAddNeuron(neuron)
     }
 
     public addSynapse(from: number, to: number, weight: number){
@@ -17,6 +25,8 @@ export class SNPSystemModel {
             throw new Error(`Neuron ${to} doesn't exist`)
 
         this.synapses[from].push({to, weight})
+
+        this.onAddSynapse(from, to, weight)
     }
     
     public getNeurons(){
@@ -39,6 +49,17 @@ export class SNPSystemModel {
                 }
             }
         }
+
+        this.onRemoveNeuron(index)
+    }
+
+    public editNeuron(index: number, neuron: Neuron){
+        if (index < 0 || index >= this.neurons.length)
+            throw new Error(`Neuron ${index} doesn't exist`)
+
+        this.neurons[index] = neuron
+
+        this.onEditNeuron(index, neuron)
     }
 
     public removeSynapse(from: number, to: number){
@@ -50,9 +71,13 @@ export class SNPSystemModel {
         for (let i = 0; i < this.synapses[from].length; i++){
             if (this.synapses[from][i].to === to){
                 this.synapses[from].splice(i, 1)
+
+                this.onRemoveSynapse(from, to)
                 return
             }
         }
+
+        throw new Error(`Synapse from ${from} to ${to} doesn't exist`)
     }
 
     public getRuleCount(){
@@ -121,7 +146,7 @@ export class SNPSystemModel {
         let maxTimeOfSpikeTrains = Math.max.apply(null,
             this.neurons
                 .filter(neuron => neuron.getType() === INPUT_NEURON)
-                .map(neuron => neuron.getSpikeTrain().length)
+                .map(neuron => neuron.getSpikeTrain()!.length)
         )
 
         if (maxTimeOfSpikeTrains <= 0)
@@ -129,7 +154,8 @@ export class SNPSystemModel {
 
         return Array(maxTimeOfSpikeTrains).fill(0).map((_, time) => 
             new Int8Array(
-                this.neurons.map(neuron => neuron.getRules().map(_ => neuron.getSpikeTrain()[time]))
+                this.neurons.map(neuron => neuron.getRules()
+                    .map(_ => (neuron.getSpikeTrain() ?? [])[time]))
                     .reduce((spikeTrainVector, spikeTrain) => spikeTrainVector.concat(spikeTrain)
             )
         ))
@@ -155,6 +181,29 @@ export class SNPSystemModel {
     public getOutputNeuronIndices(){
         return new Int8Array(this.neurons.map((neuron, i) => neuron.getType() === OUTPUT_NEURON ? i : -1)
             .filter(index => index !== -1))
+    }
+
+    
+    public on(event: 'addNeuron' | 'removeNeuron' | 'editNeuron' | 'addSynapse' | 'removeSynapse', 
+    // @ts-ignore For some reason, name 'this' is sometimes not recognized
+        callback: typeof this.onAddNeuron | typeof this.removeNeuron | typeof this.editNeuron |
+        typeof this.addSynapse | typeof this.removeSynapse): void {
+
+        switch (event){
+            case 'addNeuron':
+                this.onAddNeuron = callback as typeof this.onAddNeuron
+            case 'removeNeuron':
+                this.onRemoveNeuron = callback as typeof this.onRemoveNeuron
+            case 'editNeuron':
+                this.onEditNeuron = callback as typeof this.onEditNeuron
+                break
+            case 'addSynapse':
+                this.onAddSynapse = callback as typeof this.onAddSynapse
+                break
+            case 'removeSynapse':
+                this.onRemoveSynapse = callback as typeof this.onRemoveSynapse
+                break
+        }
     }
 }
 
