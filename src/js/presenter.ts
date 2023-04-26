@@ -13,7 +13,7 @@ export class Presenter {
         system.on('addNeuron', (neuron: Neuron) => {
             graphView.addNode({
                 spikes: neuron.getSpikes(),
-                rules: neuron.getRules().map(rule => rule.latex + '\\'),
+                rules: neuron.getRules().map(rule => rule.latex).join('\\'),
                 delay: neuron.getType() === REG_NEURON ? 0 : undefined,
                 spikeTrain: neuron.getSpikeTrain()
             })
@@ -24,7 +24,7 @@ export class Presenter {
         system.on('editNeuron', (index: number, neuron: Neuron) => {
             graphView.editNode(index, {
                 spikes: neuron.getSpikes(),
-                rules: neuron.getRules().map(rule => rule.latex + '\\'),
+                rules: neuron.getRules().map(rule => rule.latex).join('\\'),
                 delay: neuron.getType() === REG_NEURON ? 0 : undefined,
                 spikeTrain: neuron.getSpikeTrain()
             })

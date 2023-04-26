@@ -210,7 +210,7 @@ export class SvgGraphView {
         this.graph.endUpdate()
     }
 
-    public updateEdge(from: number, to: number, spiking: boolean) {
+    public editEdge(from: number, to: number, spiking: boolean) {
         this.graph.beginUpdate()
         this.graph.getLink(from, to)!.data.spiking = spiking
         this.graph.endUpdate()
