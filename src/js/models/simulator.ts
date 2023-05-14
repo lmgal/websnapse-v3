@@ -1,17 +1,19 @@
 /// <reference types="emscripten" />
-import { SNPSystemModel } from "./sn-p-system.js"
-// @ts-ignore
-import SNPModule from '../wasm/sn-p-system.js'
+import { SNPSystemModel } from "./sn-p-system"
+import SNPModule from '../wasm/sn-p-system'
+import getRandomArrayValue from "../util/get-random-array-value"
+import { INPUT_NEURON, Neuron, OUTPUT_NEURON } from "./neuron"
 
-type WasmInt8Array = { 
+type WasmInt8Array = {
     data: Int8Array
-    offset: number 
+    offset: number
 }
 
 interface SNPSystemModule extends EmscriptenModule {
     _getNext(
         configurationVectorOffset: number,
         delayStatusVectorOffset: number,
+        spikingVectorOffset: number,
         transposedSpikingTransitionMatrixOffset: number,
         delayVectorOffset: number,
         ruleCountVectorOffset: number,
@@ -20,46 +22,65 @@ interface SNPSystemModule extends EmscriptenModule {
         spikeTrainVectorOffset: number,
         ruleCount: number,
         neuronCount: number
-    ) : void
+    ): void
+
+    _getPrev(
+        configurationVectorOffset: number,
+        delayStatusVectorOffset: number,
+        spikingVectorOffset: number,
+        transposedSpikingTransitionMatrixOffset: number,
+        delayVectorOffset: number,
+        ruleCountVectorOffset: number,
+        prevDecisionVectorOffset: number,
+        prevDelayIndicatorVectorOffset: number,
+        prevSpikeTrainVectorOffset: number,
+        ruleCount: number,
+        neuronCount: number
+    ): void
 }
 
 export class SimulatorModel {
-    // @ts-ignore 
-    private module : SNPSystemModule
-    // Model vector definition
-    private transposedSpikingTransitionMatrix! : WasmInt8Array
-    private initialConfigurationVector! : Int8Array
-    private delayVector! : WasmInt8Array
-    private ruleCountVector! : WasmInt8Array
-    private spikeTrainVectors! : Array<Int8Array>
-    private outputNeuronIndices! : Int8Array
+    private module: SNPSystemModule
+    private simulating = false
+    private nextInterval: ReturnType<typeof setInterval> | null = null
+    private isFirstSetup = true
+    // System vector definition
+    private transposedSpikingTransitionMatrix!: WasmInt8Array
+    private initialConfigurationVector!: Int8Array
+    private delayVector!: WasmInt8Array
+    private ruleCountVector!: WasmInt8Array
+    private spikeTrainVectors!: Array<Int8Array>
     // States
-    private configurationVector! : WasmInt8Array
-    private delayStatusVector! : WasmInt8Array
-    private delayIndicatorVector! : WasmInt8Array
+    private configurationVector!: WasmInt8Array
+    private delayStatusVector!: WasmInt8Array
+    private spikingVector!: WasmInt8Array
+    private delayIndicatorVector!: WasmInt8Array
     // Input to get next config
-    private decisionVector! : WasmInt8Array
-    private spikeTrainVector! : WasmInt8Array
+    private decisionVector!: WasmInt8Array
+    private spikeTrainVector!: WasmInt8Array
     // History
     private time = 0
-    private configurationVectorStack : Array<Int8Array> = []
-    private decisionVectorStack : Array<Int8Array> = []
-    private delayStatusVectorStack : Array<Int8Array> = []
-    private outputSpikeTrains: Array<Array<boolean>> = []
+    private decisionVectorStack: Array<Int8Array> = []
+    private delayIndicatorVectorStack: Array<Int8Array> = []
+    private outputSpikeTrains: Map<number, Array<number>> = new Map()
     // Binding callback functions
-    private onNext: (configurationVector: Int8Array, delayStatusVector: Int8Array, time: number) => void = () => {}
-    private onPrev: (configurationVector: Int8Array, delayStatusVector: Int8Array, time: number) => void = () => {}
-    private onReset: (configurationVector: Int8Array, delayStatusVector: Int8Array) => void = () => {}
+    private onChange: (configurationVector: Int8Array, delayStatusVector: Int8Array,
+        spikingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>) => void = () => { }
+    private onDecisionNeed: (configurationVector: Int8Array, delayStatusVector: Int8Array) => void = () => {}
 
-    public constructor(model: SNPSystemModel){
+    public constructor() {
         SNPModule().then((module: SNPSystemModule) => {
             this.module = module
-            this.setModel(model)
         })
+
     }
 
-    public setModel(model: SNPSystemModel){
-        const wasmMalloc = (array: Int8Array) : WasmInt8Array => {
+    public setSystem(system: SNPSystemModel) {
+        if (!this.isFirstSetup) {
+            this._free()
+        }
+
+        const wasmMalloc = (array: Int8Array): WasmInt8Array => {
             const offset = this.module._malloc(array.length * Int8Array.BYTES_PER_ELEMENT)
             this.module.HEAP8.set(array, offset)
             return {
@@ -68,32 +89,37 @@ export class SimulatorModel {
             }
         }
 
-        this.transposedSpikingTransitionMatrix = wasmMalloc(model.getTransposedSpikingTransitionMatrix())
-        this.initialConfigurationVector = model.getInitialConfigurationVector()
-        this.delayVector = wasmMalloc(model.getDelayVector())
-        this.ruleCountVector = wasmMalloc(model.getRuleCountVector())
-        this.outputNeuronIndices = model.getOutputNeuronIndices()
+        this.transposedSpikingTransitionMatrix = wasmMalloc(system.getTransposedSpikingTransitionMatrix())
+
+        this.initialConfigurationVector = system.getInitialConfigurationVector()
+        this.delayVector = wasmMalloc(system.getDelayVector())
+        this.ruleCountVector = wasmMalloc(system.getRuleCountVector())
 
         this.configurationVector = wasmMalloc(this.initialConfigurationVector)
         this.delayStatusVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
+        this.spikingVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
         this.delayIndicatorVector = wasmMalloc(this.delayVector.data.map(_ => 0))
 
-        this.decisionVector = wasmMalloc(new Int8Array(model.getRuleCount()))
-        this.spikeTrainVector = wasmMalloc(new Int8Array(model.getRuleCount()))
-        this.spikeTrainVectors = model.getSpikeTrainVectors()
-        for (const _ of this.outputNeuronIndices){
-            this.outputSpikeTrains.push([])
+        this.decisionVector = wasmMalloc(new Int8Array(system.getRuleCount()))
+        this.spikeTrainVector = wasmMalloc(new Int8Array(system.getRuleCount()))
+        this.spikeTrainVectors = system.getSpikeTrainVectors()
+        for (const index of system.getOutputNeuronIndices()) {
+            this.outputSpikeTrains.set(index, [])
         }
+
+        this.time = 0
+        this.simulating = true
+        this.isFirstSetup = false
     }
 
-    public next(decisionVector: Int8Array){
-        if (!this.configurationVector.data.some((spike) => spike > 0))
-            throw new Error('Reached final configuration')
-
-        this.configurationVectorStack.push(new Int8Array(this.configurationVector.data))
-
+    /**
+     * Move the simulator to the next time step. Assume that the model has been set,
+     * the simulator is not paused, and the simulator is not at the end of the simulation.
+     * @param decisionVector 
+     */
+    public next(decisionVector: Int8Array) {
         this.decisionVectorStack.push(decisionVector)
-        this.delayStatusVectorStack.push(new Int8Array(this.delayStatusVector.data))
+        this.delayIndicatorVectorStack.push(this.delayIndicatorVector.data.slice())
 
         this.decisionVector.data.set(decisionVector)
         this.spikeTrainVector.data.set(this.spikeTrainVectors[this.time++] ?? this.spikeTrainVector.data.fill(0))
@@ -101,6 +127,7 @@ export class SimulatorModel {
         this.module._getNext(
             this.configurationVector.offset,
             this.delayStatusVector.offset,
+            this.spikingVector.offset,
             this.transposedSpikingTransitionMatrix.offset,
             this.delayVector.offset,
             this.ruleCountVector.offset,
@@ -111,32 +138,56 @@ export class SimulatorModel {
             this.configurationVector.data.length
         )
 
-        for (let i = 0; i < this.outputNeuronIndices.length; i++){
-            const index = this.outputNeuronIndices[i]
-            this.outputSpikeTrains[i].push(this.configurationVector.data[index] > 0)
+        for (const [index, spikeTrain] of this.outputSpikeTrains.entries()) {
+            spikeTrain.push(this.configurationVector.data[index])
+            // Reset output neuron
+            this.configurationVector.data[index] = 0
         }
 
-        this.onNext(this.configurationVector.data, this.delayStatusVector.data, this.time)
+        this.onChange(this.configurationVector.data, this.delayStatusVector.data,
+            this.spikingVector.data, this.outputSpikeTrains)
     }
 
-    public prev(){
+    /**
+     * Move the simulator to the previous time step. Assume that the model has been set,
+     * the simulator is not paused, and the simulator is not at the beginning of the simulation.
+     */
+    public prev() {
         if (this.time === 0)
             throw new Error('Reached starting configuration')
 
-        const prevConfigurationVector = this.configurationVectorStack.pop()!
-        this.configurationVector.data.set(prevConfigurationVector)
+        // Get previous decision vector
+        this.decisionVector.data.set(this.decisionVectorStack.pop()!)
+        // Get previous delay indicator vector
+        this.delayIndicatorVector.data.set(this.delayIndicatorVectorStack.pop()!)
+        // Get previous spike train vector
+        this.spikeTrainVector.data.set(this.spikeTrainVectors[this.time--] ?? this.spikeTrainVector.data.fill(0))
 
-        this.decisionVectorStack.pop()
+        // TODO: Fix wasm getPrev
+        this.module._getPrev(
+            this.configurationVector.offset,
+            this.delayStatusVector.offset,
+            this.spikingVector.offset,
+            this.transposedSpikingTransitionMatrix.offset,
+            this.delayVector.offset,
+            this.ruleCountVector.offset,
+            this.decisionVector.offset,
+            this.delayIndicatorVector.offset,
+            this.spikeTrainVector.offset,
+            this.decisionVector.data.length,
+            this.configurationVector.data.length
+        )
 
-        this.spikeTrainVector.data.set(this.spikeTrainVectors[--this.time] ?? this.spikeTrainVector.data.fill(0))
+        // Pop output spike train
+        for (const spikeTrain of this.outputSpikeTrains.values()) {
+            spikeTrain.pop()
+        }
 
-        const prevDelayStatusVector = this.delayStatusVectorStack.pop()!
-        this.delayStatusVector.data.set(prevDelayStatusVector)
-
-        this.onPrev(this.configurationVector.data, this.delayStatusVector.data, this.time)
+        this.onChange(this.configurationVector.data, this.delayStatusVector.data,
+            this.spikingVector.data, this.outputSpikeTrains)
     }
 
-    public getCurrentVectors(){
+    public getState() {
         return {
             time: this.time,
             configurationVector: this.configurationVector.data,
@@ -144,14 +195,38 @@ export class SimulatorModel {
         }
     }
 
-    public reset(){
-        this.configurationVector.data.set(this.initialConfigurationVector)
-        this.delayStatusVector.data.set(this.delayStatusVector.data.map(_ => 0))
+    public hasReachedFinalConfiguration(neurons: Array<Neuron>): boolean {
+        // Check if all input spike trains have been processed
+        const lastInputSpikeTime = this.spikeTrainVectors.length
 
-        this.onReset(this.configurationVector.data, this.delayStatusVector.data)
+        // Check if there is no applicable rules
+        const hasNoApplicableRule = neurons.every((neuron, i) => 
+            neuron.getApplicableRules(this.configurationVector.data[i]).length === 0
+        )
+
+        return hasNoApplicableRule && this.time >= lastInputSpikeTime
     }
 
-    public destroy(){
+    public reset() {
+        this.time = 0
+        // Reset vectors
+        this.configurationVector.data.set(this.initialConfigurationVector)
+        this.delayStatusVector.data.set(this.delayStatusVector.data.map(_ => 0))
+        this.spikingVector.data.set(this.spikingVector.data.map(_ => 0))
+        this.delayIndicatorVector.data.set(this.delayVector.data.map(_ => 0))
+        // Reset history stack
+        this.decisionVectorStack = []
+        this.delayIndicatorVectorStack = []
+        // Reset output spike trains
+        for (const index of this.outputSpikeTrains.keys()) {
+            this.outputSpikeTrains.set(index, [])
+        }
+
+        this.onChange(this.configurationVector.data, this.delayStatusVector.data,
+            this.spikingVector.data, this.outputSpikeTrains)
+    }
+
+    private _free() {
         this.module._free(this.transposedSpikingTransitionMatrix.offset)
         this.module._free(this.configurationVector.offset)
         this.module._free(this.delayStatusVector.offset)
@@ -162,17 +237,94 @@ export class SimulatorModel {
         this.module._free(this.spikeTrainVector.offset)
     }
 
-    public on(event: string, callback: typeof this.onNext | typeof this.onReset) : void {
-        switch (event){
-            case 'next':
-                this.onNext = callback
-                break
-            case 'prev':
-                this.onPrev = callback
-                break
-            case 'reset':
-                this.onReset = callback as typeof this.onReset
-                break
-        }
+    public handleChange(handler: typeof this.onChange) {
+        this.onChange = handler
+    }
+
+    public handleDecisionNeed(handler: typeof this.onDecisionNeed) {
+        this.onDecisionNeed = handler
+    }
+
+    public isSimulating(): boolean {
+        return this.simulating
+    }
+
+    public setSimulating(simulating: boolean): void {
+        this.simulating = simulating
+    }
+
+    public getRandomDecisionVector(neurons: Array<Neuron>) {
+        const decisionVector: Array<number> = []
+        neurons.forEach((neuron, i) => {
+            if (neuron.getType() === INPUT_NEURON) {
+                decisionVector.push(0)
+                return
+            }
+            if (neuron.getType() === OUTPUT_NEURON || neuron.getRules().length === 0) {
+                return
+            }
+
+            if (this.delayStatusVector.data[i] > 0) {
+                decisionVector.push(...neuron.getRules().map(_ => 0))
+                return
+            }
+
+            const chosenIndex = getRandomArrayValue(
+                neuron.getApplicableRules(this.configurationVector.data[i])
+            ) ?? -1
+
+            decisionVector.push(...neuron.getRules().map((_, i) => {
+                return i === chosenIndex ? 1 : 0
+            }))
+        })
+
+        return new Int8Array(decisionVector)
+    }
+
+    public startAutoRandomSimulation(neurons: Array<Neuron>) {
+        this.nextInterval = setInterval(() => {
+            if (this.hasReachedFinalConfiguration(neurons)) {
+                clearInterval(this.nextInterval!)
+            } else {
+                this.next(
+                    this.getRandomDecisionVector(neurons)
+                )
+            }
+        }, 1000)
+    }
+
+    public startAutoGuidedSimulation(neurons: Array<Neuron>) {
+        this.nextInterval = setInterval(() => {
+            if (this.hasReachedFinalConfiguration(neurons)) {
+                clearInterval(this.nextInterval!)
+            } else {
+                // Check if decision needed
+                for (let i = 0; i < neurons.length; i++){
+                    if (neurons[i].getApplicableRules(this.configurationVector[i]).length > 1) {
+                        // If so, handle it from presenter
+                        this.onDecisionNeed(
+                            this.configurationVector.data, 
+                            this.delayStatusVector.data
+                        )
+                        return
+                    }
+                }
+                // Otherwise, only one decision vector can be generated
+                this.next(
+                    this.getRandomDecisionVector(neurons)
+                )
+            }
+        }, 1000)
+    }
+
+    public stopAutoSimulation() {
+        if (!this.nextInterval) return
+
+        clearInterval(this.nextInterval)
+        this.nextInterval = null
+    }
+
+    public isAuto() {
+        return this.nextInterval !== null
     }
 }

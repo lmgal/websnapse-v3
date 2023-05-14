@@ -6,27 +6,34 @@ export type Rule = {
     delay: number
 }   
 
-export const parseRule = (input: string) : Rule => {
-    const ruleRegex = new RegExp(/^((a|\^([0-9]+|\*)|\(|\)|\+)+)(\/a(\^([1-9][0-9]*))?)?(\\to|\\rightarrow)( a(\^([1-9][0-9]*))?|\\lambda)(;([0-9]+))?$/g)
+export const parseRule = (input: string) : Rule | null => {
+    const ruleRegex = new RegExp(/^([a|^()[\]+*\d\{\}(\\left)(\\right)(\\ast)]+)(\/a(\^[1-9]\d*)?)?(\\to|\\rightarrow)( a|\\lambda)(;(\d+))?$/)
     const groups = ruleRegex.exec(input)
 
     if (!groups)
-        throw new Error('Invalid rule format')
+        return null
 
     let language : RegExp
     try {
-        language = new RegExp(`^${groups[1].replace('^', '').replace(/(\d)/, '{$1}')}$`)
+        language = new RegExp(`^${groups[1].replace(/\^|\{|\}|(\\left)|(\\right)/g, '')
+            .replace(/(\d+)/g, '{$1}').replace(/\\ast/g, '*')}$`)
     } catch (e){
-        throw new Error('Invalid language: ' + groups[1])
+        return null
     }
+    
+    // Forgetting rules cannot have delay
+    if (groups[12] && groups[8] === '\\lambda')
+        return null
 
-    return {
+    const rule = {
         latex: input,
         language: language,
-        consume: groups[6] ? Number.parseInt(groups[6]) :
-            groups[4] ? 1 :
-            groups[3] ? Number.parseInt(groups[3]) : 1,
-        produce: groups[8] === '\\lambda' ? 0 : groups[10] ? Number.parseInt(groups[10]) : 1,
-        delay: groups[12] ? Number.parseInt(groups[12]) : 0
+        consume: groups[3] ? Number.parseInt(groups[3].slice(1)) :
+            groups[2] ? 1 :
+            groups[1] && groups[1].slice(2).length ? Number.parseInt(groups[1].slice(2)) : 1,
+        produce: groups[5] === ' a' ? 1 : 0,
+        delay: groups[7] ? Number.parseInt(groups[7]) : 0
     }
+
+    return rule
 }

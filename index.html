@@ -1,10 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Document</title>
+    <title>Websnapse v3</title>
+
+    <link rel="stylesheet" href="/node_modules/material-symbols/outlined.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
+    <link rel="stylesheet" href="src/css/index.css">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+    <script type="module" src="src/js/index.ts"></script>
+    <template id="rule-select-template">
+        <div class="rule-select">
+            <h1 class="neuron-index"></h1>
+            <div class="katex-drop-down">
+                <div class="drop-down-toggle"></div>
+                <ul class="drop-down-list"></ul>
+            </div>
+        </div>
+    </template>
+    <template id="rule-input-container-template">
+        <div class="rule-input-container one-line">
+            <button type="button" class="icon-button">
+                <span class="material-symbols-outlined">
+                    close
+                </span>
+            </button>
+        </div>
+        <span class="error-msg"></span>
+    </template>
 </head>
+
 <body>
+    <!-- This is for having relative measurements to be used in rendering LaTeX -->
     <div id="hidden-div" style="position: absolute; left: -9999px; top: -9999px;"></div>
+    <nav>
+        <h1>WebSnapse v3</h1>
+        <button id="new-system-btn">New</button>
+        <button id="import-system-btn">Import</button>
+        <button id="export-system-btn">Export</button>
+    </nav>
+    <div class="mid-container">
+        <div id="left-panel">
+            <button class="icon-button" id="add-reg-neuron-btn" title="Add regular neuron">
+                <span class="material-symbols-outlined">check_box_outline_blank</span>
+            </button>
+            <button class="icon-button" id="add-input-neuron-btn" title="Add input neuron">
+                <span class="material-symbols-outlined">output</span>
+            </button>
+            <button class="icon-button" id="add-output-neuron-btn" title="Add output neuron">
+                <span class="material-symbols-outlined">exit_to_app</span>
+            </button>
+            <button class="icon-button" id="add-synapse-btn" title="Add synapse">
+                <span class="material-symbols-outlined">pen_size_2</span>
+            </button>
+        </div>
+        <div id="graph-container"></div>
+    </div>
+    <div id="simulator-panel">
+        <div class="one-line">
+            <p title="">Mode: </p>
+            <select id="simulator-mode-select">
+                <option>Pseudo-random</option>
+                <option>Guided</option>
+            </select>
+        </div>
+        <div class="simulator-buttons">
+            <button class="icon-button" id="prev-btn">
+                <span class="material-symbols-outlined">skip_previous</span>
+            </button>
+            <button class="icon-button" id="play-pause-btn">
+                <span class="material-symbols-outlined">play_arrow</span> <!-- pause -->
+            </button>
+            <button class="icon-button" id="stop-btn">
+                <span class="material-symbols-outlined">stop</span>
+            </button>
+            <button class="icon-button" id="next-btn">
+                <span class="material-symbols-outlined">skip_next</span>
+            </button>
+        </div>
+        <!-- <div class="one-line">
+            <p>Time</p>
+            <input type="range" min="0" max="1"></input>
+        </div> -->
+    </div>
+    <!-- Hidden -->
+    <dialog id="decision-controls">
+        <div class="modal-content">
+
+        </div>
+        <div class="modal-buttons">
+            <button class="basic-button" id="decision-confirm-btn">Confirm</button>
+            <button class="basic-button" id="decision-cancel-btn">Cancel</button>
+        </div>
+    </dialog>
+    <dialog id="neuron-properties">
+        <div class="modal-content">
+            <h1 id="neuron-properties-title">Add Neuron</h1>
+            <div class="one-line">
+                <p>ID: </p>
+                <div id="neuron-id"></div>
+            </div>
+            <span class="error-msg" id="neuron-id-error"></span>
+            <div class="one-line reg-neuron-property">
+                <p>Spikes: </p>
+                <input type="number" id="neuron-spikes"></input>
+            </div>
+            <span class="error-msg" id="neuron-spikes-error"></span>
+            <div class="reg-neuron-property">
+                <p>Rules: </p>
+                <ul id="neuron-rule-list"></ul>
+                <button type="button" class="basic-button contained" id="neuron-rule-add-btn">Add rule</button>
+            </div>
+            <div class="one-line non-reg-neuron-property">
+                <p>Spike train: </p>
+                <div id="neuron-spike-train"></input>
+            </div>
+            <span class="error-msg" id="neuron-spike-train-error"></span>
+        </div>
+        <div class="modal-buttons">
+            <button class="basic-button" id="neuron-confirm-btn">Confirm</button>
+            <button class="basic-button" id="neuron-cancel-btn" type="button">Cancel</button>
+        </div>
+    </dialog>
+    <dialog id="synapse-properties">
+        <div class="modal-content">
+            <h1 id="synapse-properties-title">Add synapse</h1>
+            <div class="one-line">
+                <p>Weight: </p>
+                <input type="number" id="synapse-weight" placeholder="0"></input>
+            </div>
+            <span id="synapse-weight-error"></span>
+        </div>
+        <div class="modal-buttons">
+            <button class="basic-button" id="synapse-confirm-btn">Confirm</button>
+            <button class="basic-button" id="synapse-cancel-btn" type="button">Cancel</button>
+        </div>
+    </dialog>
+    <ul class="context-menu" id="neuron-context-menu" hidden>
+        <li><button id="neuron-context-menu-edit-btn">Edit neuron</button></li>
+        <li><button id="neuron-context-menu-delete-btn">Delete neuron</button></li>
+    </ul>
+    <ul class="context-menu" id="synapse-context-menu" hidden>
+        <li><button id="synapse-context-menu-edit-btn">Edit synapse</button></li>
+        <li><button id="synapse-context-menu-delete-btn">Delete synapse</button></li>
+    </ul>
 </body>
+
 </html>

@@ -1,12 +1,17 @@
 <html>
     <head>
-        <script type="module" src="dist/js/test/wasm-test.js"></script>
+        <script type="module" src="src/js/test/wasm-test.ts"></script>
         <script type="text/javascript">
             function runTest() {
                 simulator.next(new Int8Array([1, 0, 1, 0, 0, 1, 0]))
                 // t = 1
+                console.log(simulator.configurationVector.data)
+                console.log(simulator.delayStatusVector.data)
+                console.log(simulator.delayIndicatorVector.data)
+                console.log(simulator.spikingVector.data)
+
                 console.assert(simulator.configurationVector.data.every((cell, i) => {
-                    return cell === [2, 2, 1, 1][i]
+                    return cell === [2, 2, 1, 0][i]
                 }))
                 console.assert(simulator.delayStatusVector.data.every((cell, i) => {
                     return cell === [0, 0, 0, 0][i]
@@ -17,8 +22,13 @@
                 simulator.next(new Int8Array([1, 0, 0, 0, 1, 1, 0]))
 
                 // t = 2
+                console.log(simulator.configurationVector.data)
+                console.log(simulator.delayStatusVector.data)
+                console.log(simulator.delayIndicatorVector.data)
+                console.log(simulator.spikingVector.data)
+
                 console.assert(simulator.configurationVector.data.every((cell, i) => {
-                    return cell === [2, 2, 1, 1][i]
+                    return cell === [2, 2, 1, 0][i]
                 }))
                 console.assert(simulator.delayStatusVector.data.every((cell, i) => {
                     return cell === [0, 0, 0, 0][i]
@@ -29,8 +39,13 @@
                 simulator.next(new Int8Array([1, 0, 0, 0, 1, 0, 1]))
 
                 // t = 3
+                console.log(simulator.configurationVector.data)
+                console.log(simulator.delayStatusVector.data)
+                console.log(simulator.delayIndicatorVector.data)
+                console.log(simulator.spikingVector.data)
+
                 console.assert(simulator.configurationVector.data.every((cell, i) => {
-                    return cell === [1, 1, 1, 1][i]
+                    return cell === [1, 1, 1, 0][i]
                 }))
                 console.assert(simulator.delayStatusVector.data.every((cell, i) => {
                     return cell === [0, 0, 1, 0][i]
@@ -41,8 +56,13 @@
                 simulator.next(new Int8Array([0, 1, 0, 1, 0, 0, 0]))
 
                 // t = 4
+                console.log(simulator.configurationVector.data)
+                console.log(simulator.delayStatusVector.data)
+                console.log(simulator.delayIndicatorVector.data)
+                console.log(simulator.spikingVector.data)
+
                 console.assert(simulator.configurationVector.data.every((cell, i) => {
-                    return cell === [1, 1, 0, 1][i]
+                    return cell === [1, 1, 0, 0][i]
                 }))
                 console.assert(simulator.delayStatusVector.data.every((cell, i) => {
                     return cell === [0, 1, 0, 0][i]
@@ -53,8 +73,13 @@
                 simulator.next(new Int8Array([0, 1, 0, 0, 0, 0, 0]))
 
                 // t = 5
+                console.log(simulator.configurationVector.data)
+                console.log(simulator.delayStatusVector.data)
+                console.log(simulator.delayIndicatorVector.data)
+                console.log(simulator.spikingVector.data)
+
                 console.assert(simulator.configurationVector.data.every((cell, i) => {
-                    return cell === [0, 0, 0, 2][i]
+                    return cell === [0, 0, 0, 0][i]
                 }))
                 console.assert(simulator.delayStatusVector.data.every((cell, i) => {
                     return cell === [0, 0, 0, 0][i]

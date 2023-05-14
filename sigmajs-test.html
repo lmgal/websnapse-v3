@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sigma.js Rounded Rectangular Nodes</title>
+  <style>
+    #graph-container {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="graph-container"></div>
+
+  <!-- Include the Sigma.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sigma.js/2.0.0/sigma.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Create a new Sigma.js instance
+      const sigmaInstance = new sigma({
+        container: 'graph-container',
+        settings: {
+          defaultNodeColor: '#666',
+          defaultNodeBorderColor: '#fff',
+          defaultNodeBorderSize: 2,
+          defaultLabelColor: '#fff',
+          defaultLabelSize: 14,
+          defaultLabelHoverColor: '#000',
+          edgeColor: 'default',
+          defaultEdgeColor: '#ccc',
+          defaultEdgeType: 'line',
+          defaultEdgeHoverColor: '#000',
+          minNodeSize: 8,
+          maxNodeSize: 16
+        }
+      });
+
+      // Define the graph data
+      const graphData = {
+        nodes: [
+          { id: 'node1', label: 'Node 1', x: 0, y: 0, size: 12 },
+          { id: 'node2', label: 'Node 2', x: 100, y: 0, size: 12 },
+          { id: 'node3', label: 'Node 3', x: 200, y: 0, size: 12 }
+        ],
+        edges: [
+          { id: 'edge1', source: 'node1', target: 'node2' },
+          { id: 'edge2', source: 'node2', target: 'node3' }
+        ]
+      };
+
+      // Add the graph data to the Sigma instance
+      sigmaInstance.graph.read(graphData);
+
+      // Refresh the graph to render it
+      sigmaInstance.refresh();
+
+      // Customize node rendering
+      sigmaInstance.renderer.settings({
+        nodeRenderer: {
+          container: 'rect',
+          shape: 'roundedRectangle',
+          roundedRect: true
+        }
+      });
+    });
+  </script>
+</body>
+</html>

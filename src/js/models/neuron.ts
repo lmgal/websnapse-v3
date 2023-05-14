@@ -7,17 +7,26 @@ const OUTPUT_NEURON = 2
 type NeuronType = 0 | 1 | 2
 
 class Neuron {
+    private id : string
     private type : NeuronType
     // For regular neurons
     private rules? : Array<Rule>
     private spikes? : number
     // For input neurons
-    private spikeTrain? : Uint8Array
+    private spikeTrain? : Array<number>
 
     constructor(type: NeuronType){
         this.type = type
         if (type === REG_NEURON)
             this.rules = []
+    }
+
+    public setId(id: string){
+        this.id = id
+    }
+
+    public getId(){
+        return this.id
     }
 
     public getType(){
@@ -30,7 +39,7 @@ class Neuron {
 
     public getSpikes(){
         if (this.type !== REG_NEURON)
-            return 0
+            return undefined
 
         return this.spikes!
     }
@@ -51,7 +60,7 @@ class Neuron {
         return this.rules!
     }
 
-    public setSpikeTrain(spikeTrain: Uint8Array){
+    public setSpikeTrain(spikeTrain: Array<number>){
         if (this.type !== INPUT_NEURON)
             throw new Error('Can\'t set spike train for non-input neurons')
 
@@ -59,7 +68,7 @@ class Neuron {
     }
 
     public getSpikeTrain(){
-        return this.spikeTrain
+        return this.spikeTrain ?? []
     }
 
     public addRule(rule: Rule){
@@ -68,12 +77,22 @@ class Neuron {
         this.rules!.push(rule)
     }
 
+    /**
+     * Get indices of rules that are applicable given the number of spikes
+     * @param spikes 
+     * @returns 
+     */
     public getApplicableRules(spikes: number){
         if (this.type !== REG_NEURON)
             return []
 
         const spikeString = 'a'.repeat(spikes)
-        return this.rules!.map((rule, i) => rule.language.test(spikeString) === true ? 1 : 0)
+        return this.rules!.map((rule, i) => {
+            if (spikeString.length < rule.consume)
+                return -1
+            return rule.language.test(spikeString) ? i : -1
+        })
+            .filter(i => i !== -1)
     }
 }
 
@@ -90,13 +109,24 @@ class NeuronBuilder {
         return this
     }
 
+    public setId(id: string){
+        this.neuron.setId(id)
+        return this
+    }
+
+    public setRules(rules: Array<Rule>){
+        for (const rule of rules)
+            this.neuron.addRule(rule)
+        return this
+    }
+
     public setSpikes(spikes: number){
         this.neuron.setSpikes(spikes)
         return this
     }
 
-    public setSpikeTrain(spikeTrain: Uint8Array){
-        this.setSpikeTrain(spikeTrain)
+    public setSpikeTrain(spikeTrain: Array<number>){
+        this.neuron.setSpikeTrain(spikeTrain)
         return this
     }
     

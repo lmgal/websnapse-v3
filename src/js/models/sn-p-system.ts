@@ -3,85 +3,110 @@ import { INPUT_NEURON, OUTPUT_NEURON, Neuron } from "./neuron.js"
 
 export class SNPSystemModel {
     private neurons : Array<Neuron> = []
-    private synapses : Array<Array<{to: number, weight: number}>> = []
+    private synapses : Map<string, Array<{toId: string, weight: number}>> = new Map()
     // Callback functions
     private onAddNeuron: (neuron: Neuron) => void = () => {}
-    private onRemoveNeuron: (index: number) => void = () => {}
-    private onEditNeuron: (index: number, neuron: Neuron) => void = () => {}
-    private onAddSynapse: (from: number, to: number, weight: number) => void = () => {}
-    private onRemoveSynapse: (from: number, to: number) => void = () => {}
+    private onRemoveNeuron: (neuron: Neuron) => void = () => {}
+    private onEditNeuron: (id: string, neuron: Neuron) => void = () => {}
+    private onAddSynapse: (fromId: string, to: string, weight: number) => void = () => {}
+    private onRemoveSynapse: (fromId: string, toId: string) => void = () => {}
+    private onEditSynapse: (fromId: string, toId: string, weight: number) => void = () => {}
+    private onReset: () => void = () => {}
 
     public addNeuron(neuron: Neuron){
         this.neurons.push(neuron)
-        this.synapses.push([])
+        this.synapses.set(neuron.getId(), [])
 
         this.onAddNeuron(neuron)
     }
 
-    public addSynapse(from: number, to: number, weight: number){
-        if (from < 0 || from >= this.neurons.length)
-            throw new Error(`Neuron ${from} doesn't exist`)
-        if (to < 0 || to >= this.neurons.length)
-            throw new Error(`Neuron ${to} doesn't exist`)
+    public addSynapse(fromId: string, toId: string, weight: number){
+        if (!this.synapses.has(fromId))
+            throw new Error(`Neuron ${fromId} doesn't exist`)
+        if (!this.synapses.has(toId))
+            throw new Error(`Neuron ${toId} doesn't exist`)
 
-        this.synapses[from].push({to, weight})
+        this.synapses.get(fromId)!.push({toId: toId, weight: weight})
 
-        this.onAddSynapse(from, to, weight)
+        this.onAddSynapse(fromId, toId, weight)
     }
     
     public getNeurons(){
         return this.neurons
     }
 
-    public removeNeuron(index: number){
-        if (index < 0 || index >= this.neurons.length)
-            throw new Error(`Neuron ${index} doesn't exist`)
+    public removeNeuron(neuronId: string){
+        const neuronToDelete = this.getNeuronById(neuronId)
+        if (!neuronToDelete)
+            throw new Error(`Neuron ${neuronId} doesn't exist`)
+    
+        this.neurons = this.neurons.filter(neuron => neuron.getId() !== neuronId)
+        this.synapses.delete(neuronId)
 
-        this.neurons.splice(index, 1)
-        this.synapses.splice(index, 1)
-        for (const synapses of this.synapses){
-            for (let i = 0; i < synapses.length; i++){
-                if (synapses[i].to === index){
-                    synapses.splice(i, 1)
+        for (const synapse of this.synapses.values()){
+            for (let i = 0; i < synapse.length; i++){
+                if (synapse[i].toId === neuronId){
+                    synapse.splice(i, 1)
                     i--
-                } else if (synapses[i].to > index){
-                    synapses[i].to--
                 }
             }
         }
 
-        this.onRemoveNeuron(index)
+        this.onRemoveNeuron(neuronToDelete)
     }
 
-    public editNeuron(index: number, neuron: Neuron){
-        if (index < 0 || index >= this.neurons.length)
-            throw new Error(`Neuron ${index} doesn't exist`)
+    public editNeuron(neuronId: string, newNeuron: Neuron){
+        const index = this.neurons.findIndex(neuron => neuron.getId() === neuronId)
+        if (index === -1)
+            throw new Error(`Neuron ${neuronId} doesn't exist`)
 
-        this.neurons[index] = neuron
+        this.neurons[index] = newNeuron
 
-        this.onEditNeuron(index, neuron)
+        this.onEditNeuron(neuronId, newNeuron)
     }
 
-    public removeSynapse(from: number, to: number){
-        if (from < 0 || from >= this.neurons.length)
-            throw new Error(`Neuron ${from} doesn't exist`)
-        if (to < 0 || to >= this.neurons.length)
-            throw new Error(`Neuron ${to} doesn't exist`)
+    public removeSynapse(fromId: string, toId: string){
+        if (!this.synapses.has(fromId))
+            throw new Error(`Neuron ${fromId} doesn't exist`)
+        if (!this.synapses.has(toId))
+            throw new Error(`Neuron ${toId} doesn't exist`)
 
-        for (let i = 0; i < this.synapses[from].length; i++){
-            if (this.synapses[from][i].to === to){
-                this.synapses[from].splice(i, 1)
-
-                this.onRemoveSynapse(from, to)
+        const fromSynapses = this.synapses.get(fromId)!
+        for (let i = 0; i < fromSynapses.length; i++){
+            if (fromSynapses[i].toId === toId){
+                fromSynapses.splice(i, 1)
+                this.onRemoveSynapse(fromId, toId)
                 return
             }
         }
 
-        throw new Error(`Synapse from ${from} to ${to} doesn't exist`)
+        throw new Error(`Synapse from ${fromId} to ${toId} doesn't exist`)
+    }
+
+    public editSynapse(fromId: string, toId: string, weight: number){
+        if (!this.synapses.has(fromId))
+            throw new Error(`Neuron ${fromId} doesn't exist`)
+        if (!this.synapses.has(toId))
+            throw new Error(`Neuron ${toId} doesn't exist`)
+
+        const fromSynapses = this.synapses.get(fromId)!
+        for (let i = 0; i < fromSynapses.length; i++){
+            if (fromSynapses[i].toId === toId){
+                fromSynapses[i].weight = weight
+                this.onEditSynapse(fromId, toId, weight)
+                return
+            }
+        }
+
+        throw new Error(`Synapse from ${fromId} to ${toId} doesn't exist`)
     }
 
     public getRuleCount(){
         return this.neurons.reduce((ruleCount, neuron) => ruleCount + neuron.getRules().length, 0)
+    }
+
+    public getSynapses(){
+        return this.synapses
     }
 
     /**
@@ -90,20 +115,20 @@ export class SNPSystemModel {
      * is scanned in row-order and hence more cache friendly
      */
     public getTransposedSpikingTransitionMatrix() {
-        const totalRules : Array<Rule & {ownerIndex: number}> = []
-        for (let i = 0; i < this.neurons.length; i++){
-            for (const rule of this.neurons[i].getRules()){
-                totalRules.push({...rule, ownerIndex: i})
+        const totalRules : Array<Rule & {ownerId: string}> = []
+        for (const neuron of this.neurons) {
+            for (const rule of neuron.getRules()) {
+                totalRules.push({...rule, ownerId: neuron.getId()})
             }
         }
 
         const getSpikingTransitionMatrixCell = (rule: {
-            consume: number, produce: number, ownerIndex: number}, neuronIndex: number) => {
-                if (neuronIndex === rule.ownerIndex)
+            consume: number, produce: number, ownerId: string}, neuronId: string) => {
+                if (neuronId === rule.ownerId)
                     return -rule.consume
 
-                for (const outgoingSynapse of this.synapses[rule.ownerIndex]){
-                    if (outgoingSynapse.to === neuronIndex){
+                for (const outgoingSynapse of this.synapses.get(rule.ownerId) || []){
+                    if (outgoingSynapse.toId === neuronId){
                         return rule.produce * outgoingSynapse.weight
                     }
                 }
@@ -112,9 +137,9 @@ export class SNPSystemModel {
             }
 
         const matrix : Array<number> = []
-        for (let j = 0; j < this.neurons.length; j++){
+        for (const neuron of this.neurons){
             for (const rule of totalRules){
-                matrix.push(getSpikingTransitionMatrixCell(rule, j))
+                matrix.push(getSpikingTransitionMatrixCell(rule, neuron.getId()))
             }
         }
 
@@ -135,7 +160,7 @@ export class SNPSystemModel {
     }
 
     public getInitialConfigurationVector(){
-        return new Int8Array(this.neurons.map((neuron) => neuron.getSpikes()))
+        return new Int8Array(this.neurons.map((neuron) => neuron.getSpikes() ?? 0))
     }
 
     public getInitialDelayStatusVector(){
@@ -161,49 +186,47 @@ export class SNPSystemModel {
         ))
     }
 
-    /**
-     * Get boolean arrays for each neuron, indicating which rules are applicable
-     * @param configurationVector 
-     * @param ruleCountVector 
-     */
-    public getApplicableRules(
-        configurationVector: Int8Array, 
-        delayStatusVector: Int8Array, 
-        delayedSpikingVector: Int8Array,
-    ){
-        return this.neurons.map((neuron, i) => {
-            if (delayStatusVector[i] > 0 || delayedSpikingVector[i] > 0)
-                return Array(neuron.getRules().length).fill(0)
-            return neuron.getApplicableRules(configurationVector[i])
-        })
-    }
-
     public getOutputNeuronIndices(){
         return new Int8Array(this.neurons.map((neuron, i) => neuron.getType() === OUTPUT_NEURON ? i : -1)
             .filter(index => index !== -1))
     }
-
     
-    public on(event: 'addNeuron' | 'removeNeuron' | 'editNeuron' | 'addSynapse' | 'removeSynapse', 
-    // @ts-ignore For some reason, name 'this' is sometimes not recognized
-        callback: typeof this.onAddNeuron | typeof this.removeNeuron | typeof this.editNeuron |
-        typeof this.addSynapse | typeof this.removeSynapse): void {
+    public handleAddNeuron(handler: typeof this.onAddNeuron) {
+        this.onAddNeuron = handler
+    }
 
-        switch (event){
-            case 'addNeuron':
-                this.onAddNeuron = callback as typeof this.onAddNeuron
-            case 'removeNeuron':
-                this.onRemoveNeuron = callback as typeof this.onRemoveNeuron
-            case 'editNeuron':
-                this.onEditNeuron = callback as typeof this.onEditNeuron
-                break
-            case 'addSynapse':
-                this.onAddSynapse = callback as typeof this.onAddSynapse
-                break
-            case 'removeSynapse':
-                this.onRemoveSynapse = callback as typeof this.onRemoveSynapse
-                break
-        }
+    public handleRemoveNeuron(handler: typeof this.onRemoveNeuron) {
+        this.onRemoveNeuron = handler
+    }
+
+    public handleEditNeuron(handler: typeof this.onEditNeuron) {
+        this.onEditNeuron = handler
+    }
+
+    public handleAddSynapse(handler: typeof this.onAddSynapse) {
+        this.onAddSynapse = handler
+    }
+
+    public handleRemoveSynapse(handler: typeof this.onRemoveSynapse) {
+        this.onRemoveSynapse = handler
+    }
+
+    public handleEditSynapse(handler: typeof this.onEditSynapse) {
+        this.onEditSynapse = handler
+    }
+
+    public handleReset(handler: typeof this.onReset) {
+        this.onReset = handler 
+    }
+
+    public reset(){
+        this.neurons = []
+        this.synapses.clear()
+        this.onReset()
+    }
+
+    public getNeuronById(id: string){
+        return this.neurons.find(neuron => neuron.getId() === id)
     }
 }
 
