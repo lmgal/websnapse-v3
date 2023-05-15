@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
     "wasm-compile": "emcc -o src/js/wasm/sn-p-system.js src/wasm/sn-p-system.c -msimd128 -O3 -s EXPORTED_FUNCTIONS=_getNext,_getPrev,_malloc,_free -s EXPORT_ES6=1 -s MODULARIZE=1 -s EXPORTED_RUNTIME_METHODS=['ccall']",
-    "move-wasm-public": "move src\\js\\wasm\\sn-p-system.wasm public\\sn-p-system.wasm"
+    "build": "vite build"
   },
   "keywords": [],
   "authors": [
