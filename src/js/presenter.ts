@@ -71,6 +71,10 @@ export class Presenter {
             // If not simulating, ignore
             if (!simulator.isSimulating()) return
 
+            console.log(configurationVector)
+            console.log(delayStatusVector)
+            console.log(outputSpikeTrains)
+
             graphView.beginUpdate()
 
             // Change neuron states
@@ -174,6 +178,17 @@ export class Presenter {
             }
 
             this.toNeuronId = nodeId
+
+            // Check if there is already an existing synapse
+            if (system.getSynapses().get(this.fromNeuronId)!.find(synapse => synapse.toId === this.toNeuronId)) {
+                // Reset
+                this.activePanelButtonId = null
+                uiView.togglePanelButton('add-synapse-btn')
+                graphView.setGraphCursor('default')
+                this.fromNeuronId = null
+                this.toNeuronId = null
+                return
+            }
             uiView.showSynapseProperties({
                 title: `Add synapse from ${this.fromNeuronId} to ${this.toNeuronId}`,
                 weight: 1,
@@ -501,6 +516,9 @@ export class Presenter {
                 weight: system.getSynapses().get(this.focusedSynapseIds!.fromId)!.find(
                     synapse => synapse.toId === this.focusedSynapseIds!.toId)!.weight
             }, false)
+        })
+        uiView.handleSynapseContextMenuDeleteBtn(() => {
+            system.removeSynapse(this.focusedSynapseIds!.fromId, this.focusedSynapseIds!.toId)
         })
     }
 

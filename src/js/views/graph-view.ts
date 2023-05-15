@@ -173,7 +173,7 @@ export class SvgGraphView {
             return ui
         }).bind(this))
 
-        this.graphics.placeNode(function (nodeUI, pos) {
+        this.graphics.placeNode((nodeUI, pos) => {
             nodeUI.setAttribute('transform', 'translate(' + (pos.x - 12) + ',' + (pos.y - 12) + ')')
         })
 
@@ -208,6 +208,9 @@ export class SvgGraphView {
             const path = Viva.Graph.svg('path')
             path.setAttribute('stroke', 'gray')
             path.setAttribute('marker-end', 'url(#Triangle)')
+            // Set from and to ids 
+            path.setAttribute('from', link.fromId)
+            path.setAttribute('to', link.toId)
 
             if (link.data!.spiking)
                 path.setAttribute('stroke-dasharray', '5, 5')
@@ -233,12 +236,27 @@ export class SvgGraphView {
                 this.onEdgeRightClick(link.fromId, link.toId, e.clientX, e.clientY)
             })
 
+            // Check if there is another link with the same ids but reversed
+            const paths = this.graphics.getSvgRoot().querySelectorAll('path')
+            for (let i = 0; i < paths.length; i++) {
+                if (paths[i].getAttribute('from') === link.toId 
+                && paths[i].getAttribute('to') === link.fromId) {
+                    // Set an offset to avoid overlapping
+                    path.setAttribute('transform', 'translate(0, 40)')
+                    text.setAttribute('transform', 'translate(0, 40)')
+                    break
+                }
+            }
+
             ui.append(path)
             ui.append(boundingRect)
             ui.append(text)
 
             return ui
-        }).bind(this)).placeLink(function (linkUI, fromPos, toPos) {
+        }).bind(this)).placeLink(((linkUI: SVGElement, 
+            fromPos: {x : number, y: number}, 
+            toPos: {x: number, y: number}
+        ) => {
             const path = linkUI.childNodes[0] as SVGElement
             const rect = linkUI.childNodes[1] as SVGElement
             const text = linkUI.childNodes[2] as SVGElement
@@ -283,8 +301,9 @@ export class SvgGraphView {
             // Place the rectangle such that the path is in the middle
             rect.setAttribute('x', (rectX - boundingRectWidth / 2).toString()) 
             rect.setAttribute('y', rectY.toString())
-            rect.setAttribute('transform', `rotate(${boundingRectAngle} ${rectX} ${rectY})`)
-        })
+            rect.setAttribute('transform', `
+                ${path.getAttribute('transform') ?? ''}rotate(${boundingRectAngle} ${rectX} ${rectY})`)
+        }).bind(this))
 
         this.renderer = Viva.Graph.View.renderer(this.graph, {
             graphics: this.graphics,

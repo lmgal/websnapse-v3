@@ -187,8 +187,8 @@ export class SNPSystemModel {
     }
 
     public getOutputNeuronIndices(){
-        return new Int8Array(this.neurons.map((neuron, i) => neuron.getType() === OUTPUT_NEURON ? i : -1)
-            .filter(index => index !== -1))
+        return this.neurons.map((neuron, i) => neuron.getType() === OUTPUT_NEURON ? i : -1)
+            .filter(index => index !== -1)
     }
     
     public handleAddNeuron(handler: typeof this.onAddNeuron) {
