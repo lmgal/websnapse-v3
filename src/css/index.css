@@ -317,9 +317,12 @@ span {
 .drop-down-toggle {
     display: inline-block;
     padding: 10px;
+    cursor: pointer;
+}
+
+.drop-down-has-choices {
     border: 1px solid #ddd;
     border-radius: 5px;
-    cursor: pointer;
 }
 
 .drop-down-list {

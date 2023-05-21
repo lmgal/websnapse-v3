@@ -121,11 +121,12 @@ export class UIView {
      * Show the decision controls modal, constructing necessary rule selects
      * @param neuronRulesArray 
      */
-    public showDecisionControls(neuronIds: Array<string>, neuronRulesArray : Array<Array<ApplicableRule>>) {
+    public showDecisionControls(neurons: Array<{id: string, isClosed: boolean}>, 
+    neuronRulesArray : Array<Array<ApplicableRule>>) {
         neuronRulesArray.forEach((neuronRules, i) => {
             const ruleSelect = new RuleSelectBuilder()
-                .setNeuronName(neuronIds[i])
-                .setOptions(neuronRules)
+                .setNeuronName(neurons[i].id)
+                .setOptions(neuronRules, neurons[i].isClosed)
                 .build()
             this.decisionControls.getElementsByClassName('modal-content')[0].appendChild(ruleSelect)
         })

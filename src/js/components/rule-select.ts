@@ -21,8 +21,14 @@ export class RuleSelectBuilder {
         return this
     }
 
-    public setOptions(applicableRules: Array<ApplicableRule>) {
+    public setOptions(applicableRules: Array<ApplicableRule>, isClosed: boolean) {
         const dropDownToggle = this.ruleSelect.querySelector('.drop-down-toggle') as HTMLDivElement
+
+        // If closed, return
+        if (isClosed) {
+            dropDownToggle.innerText = 'Closed neuron'
+            return this
+        }
 
         // If no applicable rules, return
         if (applicableRules.length === 0) {
@@ -38,6 +44,9 @@ export class RuleSelectBuilder {
         if (applicableRules.length === 1) {
             return this
         }
+
+        // Include borders if more than one applicable rule (non-deterministic)
+        dropDownToggle.classList.add('drop-down-has-choices')
 
         // Add toggle event listener
         dropDownToggle.addEventListener('click', () => {

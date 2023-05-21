@@ -1,4 +1,4 @@
-import { SNPSystemModel } from "./models/sn-p-system"
+import { SNPSystemModel } from "./models/system"
 import { SimulatorModel } from "./models/simulator"
 import { SvgGraphView } from "./views/graph-view"
 import { UIView, PanelButtonId } from "./views/ui-view"
@@ -6,6 +6,7 @@ import { Neuron, REG_NEURON, INPUT_NEURON, OUTPUT_NEURON, NeuronBuilder } from "
 import { Rule, parseRule } from "./models/rule"
 import { ApplicableRule } from "./components/rule-select"
 import generateRandomId from "./util/generate-random-id"
+import { SystemJSON } from "./models/system-import"
 
 export class Presenter {
     // States for mediating models and views
@@ -67,13 +68,9 @@ export class Presenter {
 
         // Bind simulator and graph view
         simulator.handleChange((configurationVector: Int8Array, delayStatusVector: Int8Array,
-            spikingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>) => {
+            firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>) => {
             // If not simulating, ignore
             if (!simulator.isSimulating()) return
-
-            console.log(configurationVector)
-            console.log(delayStatusVector)
-            console.log(outputSpikeTrains)
 
             graphView.beginUpdate()
 
@@ -96,11 +93,11 @@ export class Presenter {
             }
 
             // Change synapses if source neuron is spiking. Othwerwise, remove spiking
-            for (let i = 0; i < spikingVector.length; i++) {
+            for (let i = 0; i < firingVector.length; i++) {
                 const synapses = system.getSynapses().get(system.getNeurons()[i].getId())!
                 for (const synapse of synapses) {
                     graphView.editEdge(system.getNeurons()[i].getId(), synapse.toId, {
-                        spiking: spikingVector[i] === 1
+                        spiking: firingVector[i] === 1
                     })
                 }
             }
@@ -168,19 +165,23 @@ export class Presenter {
             this.activePanelButtonId = null
             graphView.setGraphCursor('default')
         })
-        graphView.handleNodeClick((nodeId, x, y) => {
+        graphView.handleNodeClick((nodeId) => {
             if (this.activePanelButtonId !== 'add-synapse-btn')
                 return
 
             if (this.fromNeuronId === null) {
+                // If the neuron is an output neuron, ignore
+                if (system.getNeurons().find(neuron => neuron.getId() === nodeId)!
+                .getType() === OUTPUT_NEURON)
+                    return
+
                 this.fromNeuronId = nodeId
                 return
             }
 
-            this.toNeuronId = nodeId
-
-            // Check if there is already an existing synapse
-            if (system.getSynapses().get(this.fromNeuronId)!.find(synapse => synapse.toId === this.toNeuronId)) {
+            // Check if there is already an existing synapse or if the neuron is the same
+            if (system.getSynapses().get(this.fromNeuronId)!.find(synapse => 
+                synapse.toId === this.toNeuronId) || this.fromNeuronId === nodeId) {
                 // Reset
                 this.activePanelButtonId = null
                 uiView.togglePanelButton('add-synapse-btn')
@@ -189,6 +190,8 @@ export class Presenter {
                 this.toNeuronId = null
                 return
             }
+
+            this.toNeuronId = nodeId
             uiView.showSynapseProperties({
                 title: `Add synapse from ${this.fromNeuronId} to ${this.toNeuronId}`,
                 weight: 1,
@@ -220,9 +223,106 @@ export class Presenter {
         // Handle events from UI View
         // Navigation button handler
         uiView.handleNewSystemBtn(() => {
+            // Stop simulation if it is running
+            if (simulator.isSimulating()) {
+                simulator.reset()
+                simulator.stopAutoSimulation()
+                simulator.setSimulating(false)
+                uiView.setPanelButtonsEnabled(true)
+            }
             system.reset()
         })
-        // TODO: Bind import and export system
+        uiView.handleImportSystemBtn(() => {
+            // Stop simulation if it is running
+            if (simulator.isSimulating()) {
+                simulator.reset()
+                simulator.stopAutoSimulation()
+                simulator.setSimulating(false)
+                uiView.setPanelButtonsEnabled(true)
+            }
+
+            // Open file dialog
+            const input = document.createElement('input')
+            input.type = 'file'
+            input.accept = '.json'
+            input.click()
+
+            input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files![0]
+                const reader = new FileReader()
+
+                reader.onload = (e) => {
+                    const data = SystemJSON.import((e.target as FileReader).result as string)
+                    // Clear system and prepare graph view
+                    system.reset()
+                    system.setCallHandler(false) // Only for nodes
+                    graphView.beginUpdate()
+
+                    for (const neuronJSON of data.neurons) {
+                        const builder = new NeuronBuilder(neuronJSON.type).setId(neuronJSON.id)
+                        
+                        if (neuronJSON.type === REG_NEURON) {
+                            builder.setSpikes(neuronJSON.content as number)
+                            // Parse rules
+                            for (const latex of neuronJSON.rules!) {
+                                const parsedRule = parseRule(latex)
+                                if (parsedRule) 
+                                    builder.addRule(parsedRule)
+                                else 
+                                    throw new Error(`Invalid rule: ${latex}`)
+                            }
+
+                            // Create node in graph view
+                            graphView.addNode(neuronJSON.id, {
+                                spikes: neuronJSON.content as number,
+                                rules: neuronJSON.rules!.join('////'),
+                                delay: 0,
+                                pos: neuronJSON.pos
+                            })
+                        } else if (neuronJSON.type === INPUT_NEURON) {
+                            builder.setSpikeTrain(neuronJSON.content as number[])
+                            // Create node in graph view
+                            graphView.addNode(neuronJSON.id, {
+                                spikeTrain: this._spikeTrainToString(neuronJSON.content as number[]),
+                                pos: neuronJSON.pos
+                            })
+                        } else {
+                            // Create output node in graph view
+                            graphView.addNode(neuronJSON.id, {
+                                pos: neuronJSON.pos
+                            })
+                        }
+
+                        system.addNeuron(builder.build())
+                    }
+
+                    system.setCallHandler(true)
+                    for (const synapse of data.synapses) {
+                        system.addSynapse(
+                            synapse.from, 
+                            synapse.to, 
+                            synapse.weight
+                        )
+                    }
+                    
+                    graphView.endUpdate()
+                }
+
+                reader.readAsText(file)
+            }
+        })
+        uiView.handleExportSystemBtn(() => {
+            // Open file dialog
+            const a = document.createElement('a')
+            a.href = URL.createObjectURL(
+                new Blob([
+                    SystemJSON.export(system, graphView)], 
+                    {type: 'application/json'})
+                )
+
+            a.download = 'system.json'
+            a.click()
+        })
 
         // Left panel button handler
         const panelButtonHandler = (buttonId: PanelButtonId, cursor: string) => {
@@ -258,9 +358,26 @@ export class Presenter {
 
         // Decision controls handler
         uiView.handleDecisionConfirmBtn((selectedIndices) => {
-            const decisionVector = Array(system.getRuleCount()).fill(0).map((_, i) =>
-                selectedIndices.includes(i) ? 1 : 0
-            )
+            const neurons = system.getNeurons()
+            const ruleCountVector = system.getRuleCountVector()
+            const time = simulator.getState().time
+
+            let neuronIndex = 0
+            let startingRuleIndex = ruleCountVector[0]
+            const decisionVector = Array(system.getRuleCount()).fill(0).map((_, i) => {
+                // Get neuron index from rule index
+                if (i >= startingRuleIndex) {
+                    neuronIndex++
+                    startingRuleIndex += ruleCountVector[neuronIndex]
+                }
+
+                if (neurons[neuronIndex].getType() === OUTPUT_NEURON)
+                    return 0
+                if (neurons[neuronIndex].getType() === INPUT_NEURON)
+                    return neurons[neuronIndex].getSpikeTrain()[time]
+
+                return selectedIndices.includes(i) ? 1 : 0
+            })
             simulator.next(new Int8Array(decisionVector))
             // Hide decision controls
             uiView.hideDecisionControls()
@@ -318,7 +435,13 @@ export class Presenter {
             if (uiView.getSimulatorMode() === 'Guided') {
                 let globalRuleIndex = 0
                 const applicableRules: Array<Array<ApplicableRule>> = []
+                let hasRegularNeuron = false
+
                 neurons.forEach((neuron, i) => {
+                    if (neuron.getType() !== REG_NEURON)
+                        return
+
+                    hasRegularNeuron = true
                     if (state.delayStatusVector[i] > 0) {
                         applicableRules.push([])
                     } else {
@@ -334,8 +457,21 @@ export class Presenter {
                     globalRuleIndex += neuron.getRules().length
                 })
 
+                // If no regular neuron, just simulate. No need to show decision control
+                if (!hasRegularNeuron) {
+                    simulator.next(
+                        simulator.getRandomDecisionVector(system.getNeurons())
+                    )
+                    return
+                }
+
                 uiView.showDecisionControls(
-                    system.getNeurons().map(neuron => neuron.getId()),
+                    system.getNeurons()
+                        .map((neuron, i) => ({
+                            id: neuron.getId(),
+                            isClosed: state.delayStatusVector[i] > 0,
+                        }))
+                        .filter((_, i) => neurons[i].getType() === REG_NEURON),
                     applicableRules
                 )
             } else {
@@ -523,7 +659,7 @@ export class Presenter {
     }
 
     private _stringToSpikeTrain(latexString: string) {
-        const regex = /(0|1)(\^(\d|\{(\d+)\}))?/g;
+        const regex = /(\d)(\^(\d|\{(\d+)\}))?/g;
         const matches = latexString.matchAll(regex);
 
         let parsedLength = 0
@@ -531,7 +667,7 @@ export class Presenter {
         for (const match of matches) {
             const [group, base, __, singleExp, bracketExp] = match
 
-            const spike = base === '1' ? 1 : 0
+            const spike = Number.parseInt(base)
             const exp = Number.isNaN(parseInt(singleExp)) ? parseInt(bracketExp) : parseInt(singleExp)
             if (!Number.isNaN(exp))
                 spikeTrain.push(...Array(exp).fill(spike))
@@ -577,13 +713,12 @@ export class Presenter {
     }
 
     private _formatSpikeCount(spike: number, count: number) {
-        if (count === 1) {
-            return spike ? '1' : '0';
-        } else if (count <= 9) {
-            return spike ? `1^${count}` : `0^${count}`;
-        } else {
-            return spike ? `1^{${count}}` : `0^{${count}}`;
-        }
+        if (count === 1)
+            return spike.toString()
+        else if (count <= 9) 
+            return `${spike}^${count}`
+        else 
+            return `${spike}^{${count}}`
     }
 
 }

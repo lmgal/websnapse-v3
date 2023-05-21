@@ -8,7 +8,7 @@
  * Indicator vector is defined if a rule is applicable or not (accounting if delayed or chosen)
  * Decision vector is defined if a rule is chosen or not
  * Delay indicator vector is defined if a rule is delayed or not
- * Redefinition of spiking vector to define whether a neuron is spiking or not (to know whether to make edges dashed)
+ * Firing vector is defined if a neuron fires or not (for edges)
  */
 
 /**
@@ -46,16 +46,16 @@ void getIndicatorVector(
 }
 
 /**
- * @brief Get the spiking vector for the current time step
+ * @brief Get the firing vector for the current time step
  *
- * @param spikingVector
+ * @param firingVector
  * @param indicatorVector
  * @param spikeTrainVector
  * @param ruleCountVector
  * @param neuronCount
  */
-void getSpikingVector(
-    int8_t spikingVector[],
+void getFiringVector(
+    int8_t firingVector[],
     int8_t indicatorVector[],
     int8_t spikeTrainVector[],
     int8_t ruleCountVector[],
@@ -64,12 +64,12 @@ void getSpikingVector(
     int ruleIndex = 0;
     for (int i = 0; i < neuronCount; i++)
     {
-        spikingVector[i] = 0;
+        firingVector[i] = 0;
         for (int j = 0; j < ruleCountVector[i]; j++)
         {
             if (indicatorVector[ruleIndex + j] || spikeTrainVector[ruleIndex + j])
             {
-                spikingVector[ruleIndex + j] = 1;
+                firingVector[ruleIndex + j] = 1;
                 break;
             }
         }
@@ -97,7 +97,8 @@ void getNextDelayIndicatorVector(
 {
     for (int i = 0; i < ruleCount; i++)
     {
-        delayIndicatorVector[i] = (delayIndicatorVector[i] && !indicatorVector[i]) || (decisionVector[i] && delayVector[i] > 0);
+        delayIndicatorVector[i] = (delayIndicatorVector[i] && !indicatorVector[i]) 
+            || (decisionVector[i] && delayVector[i] > 0);
     }
 }
 
@@ -173,7 +174,7 @@ void getNextConfigurationVector(
  *
  * @param configurationVector
  * @param delayStatusVector
- * @param spikingVector
+ * @param firingVector
  * @param transposedTransitionMatrix
  * @param delayVector
  * @param ruleCountVector
@@ -186,7 +187,7 @@ void getNextConfigurationVector(
 void getNext(
     int8_t configurationVector[],
     int8_t delayStatusVector[],
-    int8_t spikingVector[],
+    int8_t firingVector[],
     int8_t transposedTransitionMatrix[],
     int8_t delayVector[],
     int8_t ruleCountVector[],
@@ -213,8 +214,8 @@ void getNext(
         ruleCountVector,
         neuronCount);
 
-    getSpikingVector(
-        spikingVector,
+    getFiringVector(
+        firingVector,
         indicatorVector,
         spikeTrainVector,
         ruleCountVector,
@@ -238,8 +239,6 @@ void getNext(
 
     free(indicatorVector);
 }
-
-// Functions for computing the vectors of the previous time step
 
 void getPrevDelayStatusVector(
     int8_t delayStatusVector[],
@@ -290,7 +289,7 @@ void getPrevConfigurationVector(
 void getPrev(
     int8_t configurationVector[],
     int8_t delayStatusVector[],
-    int8_t spikingVector[],
+    int8_t firingVector[],
     int8_t transposedTransitionMatrix[],
     int8_t delayVector[],
     int8_t ruleCountVector[],
@@ -311,13 +310,6 @@ void getPrev(
         ruleCountVector,
         neuronCount);
 
-    getSpikingVector(
-        spikingVector,
-        indicatorVector,
-        prevSpikeTrainVector,
-        ruleCountVector,
-        neuronCount);
-
     getPrevConfigurationVector(
         configurationVector,
         transposedTransitionMatrix,
@@ -330,6 +322,14 @@ void getPrev(
     getPrevDelayStatusVector(
         delayStatusVector,
         prevDelayIndicatorVector,
+        ruleCountVector,
+        neuronCount);
+
+    // Compute the prev previous indicator vector for prev firing vector
+    getFiringVector(
+        firingVector,
+        indicatorVector,
+        prevSpikeTrainVector,
         ruleCountVector,
         neuronCount);
 

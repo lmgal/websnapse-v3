@@ -1,7 +1,7 @@
 import '/node_modules/katex/dist/katex.min.css';
 
 import { Presenter } from './presenter';
-import { SNPSystemModel } from './models/sn-p-system';
+import { SNPSystemModel } from './models/system';
 import { SimulatorModel } from './models/simulator';
 import { SvgGraphView } from './views/graph-view';
 import { UIView } from './views/ui-view';

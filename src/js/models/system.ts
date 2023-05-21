@@ -4,6 +4,7 @@ import { INPUT_NEURON, OUTPUT_NEURON, Neuron } from "./neuron.js"
 export class SNPSystemModel {
     private neurons : Array<Neuron> = []
     private synapses : Map<string, Array<{toId: string, weight: number}>> = new Map()
+    private callHandler : boolean = true
     // Callback functions
     private onAddNeuron: (neuron: Neuron) => void = () => {}
     private onRemoveNeuron: (neuron: Neuron) => void = () => {}
@@ -17,7 +18,8 @@ export class SNPSystemModel {
         this.neurons.push(neuron)
         this.synapses.set(neuron.getId(), [])
 
-        this.onAddNeuron(neuron)
+        if (this.callHandler)
+            this.onAddNeuron(neuron)
     }
 
     public addSynapse(fromId: string, toId: string, weight: number){
@@ -28,7 +30,8 @@ export class SNPSystemModel {
 
         this.synapses.get(fromId)!.push({toId: toId, weight: weight})
 
-        this.onAddSynapse(fromId, toId, weight)
+        if (this.callHandler)
+            this.onAddSynapse(fromId, toId, weight)
     }
     
     public getNeurons(){
@@ -52,7 +55,8 @@ export class SNPSystemModel {
             }
         }
 
-        this.onRemoveNeuron(neuronToDelete)
+        if (this.callHandler)
+            this.onRemoveNeuron(neuronToDelete)
     }
 
     public editNeuron(neuronId: string, newNeuron: Neuron){
@@ -62,7 +66,8 @@ export class SNPSystemModel {
 
         this.neurons[index] = newNeuron
 
-        this.onEditNeuron(neuronId, newNeuron)
+        if (this.callHandler)
+            this.onEditNeuron(neuronId, newNeuron)
     }
 
     public removeSynapse(fromId: string, toId: string){
@@ -75,7 +80,10 @@ export class SNPSystemModel {
         for (let i = 0; i < fromSynapses.length; i++){
             if (fromSynapses[i].toId === toId){
                 fromSynapses.splice(i, 1)
-                this.onRemoveSynapse(fromId, toId)
+
+                if (this.callHandler)
+                    this.onRemoveSynapse(fromId, toId)
+
                 return
             }
         }
@@ -93,7 +101,10 @@ export class SNPSystemModel {
         for (let i = 0; i < fromSynapses.length; i++){
             if (fromSynapses[i].toId === toId){
                 fromSynapses[i].weight = weight
-                this.onEditSynapse(fromId, toId, weight)
+
+                if (this.callHandler)
+                    this.onEditSynapse(fromId, toId, weight)
+
                 return
             }
         }
@@ -167,6 +178,7 @@ export class SNPSystemModel {
         return new Int8Array(this.getNeurons().map(_ => 0))
     }
 
+    // TODO: Fix this
     public getSpikeTrainVectors(){
         let maxTimeOfSpikeTrains = Math.max.apply(null,
             this.neurons
@@ -227,6 +239,15 @@ export class SNPSystemModel {
 
     public getNeuronById(id: string){
         return this.neurons.find(neuron => neuron.getId() === id)
+    }
+
+    /**
+     * Set the callHandler flag. If true, the handler will be called when adding/removing/editing neurons/synapses
+     * Used to prevent calling the handler when loading a network from a file
+     * @param callHandler Whether to call the handler when adding/removing/editing neurons/synapses
+     */
+    public setCallHandler(callHandler: boolean) {
+        this.callHandler = callHandler
     }
 }
 

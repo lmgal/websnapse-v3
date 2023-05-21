@@ -241,9 +241,8 @@ export class SvgGraphView {
             for (let i = 0; i < paths.length; i++) {
                 if (paths[i].getAttribute('from') === link.toId 
                 && paths[i].getAttribute('to') === link.fromId) {
-                    // Set an offset to avoid overlapping
-                    path.setAttribute('transform', 'translate(0, 40)')
-                    text.setAttribute('transform', 'translate(0, 40)')
+                    // Mark that this link overlaps with another
+                    path.setAttribute('data-overlap', 'true')
                     break
                 }
             }
@@ -285,16 +284,26 @@ export class SvgGraphView {
                 'L' + to.x + ',' + to.y
             path.setAttribute("d", data)
 
-            // Render the weight of the synapse in the middle of it
-            text.setAttribute('x', ((from.x + to.x) / 2).toString())
-            text.setAttribute('y', ((from.y + to.y) / 2).toString())
-
             // Make the bounding rectangle scale with path
             const boundingRectWidth = 30
             const boundingRectHeight = Math.sqrt(Math.pow(from.x - to.x, 2) + Math.pow(from.y - to.y, 2))
             const boundingRectAngle = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI - 90
             const rectX = from.x 
             const rectY = from.y 
+
+            // If the link overlaps with another, add an offset based on the angle
+            if (path.getAttribute('data-overlap') === 'true') {
+                const offset = 30
+                path.setAttribute('transform', 
+                    `translate(${offset * Math.cos(boundingRectAngle * Math.PI / 180)}, 
+                    ${offset * Math.sin(boundingRectAngle * Math.PI / 180)})`
+                )
+            }
+
+            // Render the weight of the synapse in the middle of it
+            text.setAttribute('x', ((from.x + to.x) / 2).toString())
+            text.setAttribute('y', ((from.y + to.y) / 2).toString())
+            text.setAttribute('transform', path.getAttribute('transform') ?? '')
 
             rect.setAttribute('width', boundingRectWidth.toString())
             rect.setAttribute('height', boundingRectHeight.toString())
@@ -478,6 +487,10 @@ export class SvgGraphView {
      */
     public endUpdate() {
         this.graph.endUpdate()
+    }
+
+    public getNodeById(id: string) {
+        return this.graph.getNode<NodeData>(id)
     }
 }
 
