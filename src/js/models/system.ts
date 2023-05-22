@@ -184,18 +184,23 @@ export class SNPSystemModel {
             this.neurons
                 .filter(neuron => neuron.getType() === INPUT_NEURON)
                 .map(neuron => neuron.getSpikeTrain()!.length)
-        )
+        ) as number
 
         if (maxTimeOfSpikeTrains <= 0)
             return []
 
-        return Array(maxTimeOfSpikeTrains).fill(0).map((_, time) => 
-            new Int8Array(
-                this.neurons.map(neuron => neuron.getRules()
-                    .map(_ => (neuron.getSpikeTrain() ?? [])[time]))
-                    .reduce((spikeTrainVector, spikeTrain) => spikeTrainVector.concat(spikeTrain)
-            )
-        ))
+        return Array(maxTimeOfSpikeTrains).fill(0).map((_, time) => {
+            const spikeTrainVector : number[] = []
+            for (const neuron of this.neurons){
+                if (neuron.getType() === INPUT_NEURON){
+                    spikeTrainVector.push(neuron.getSpikeTrain()![time] || 0)
+                } else {
+                    spikeTrainVector.push(...neuron.getRules().map(_ => 0))
+                }
+            }
+
+            return new Int8Array(spikeTrainVector)
+        })
     }
 
     public getOutputNeuronIndices(){

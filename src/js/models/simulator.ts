@@ -27,7 +27,6 @@ interface SNPSystemModule extends EmscriptenModule {
     _getPrev(
         configurationVectorOffset: number,
         delayStatusVectorOffset: number,
-        firingVectorOffset: number,
         transposedSpikingTransitionMatrixOffset: number,
         delayVectorOffset: number,
         ruleCountVectorOffset: number,
@@ -62,6 +61,7 @@ export class SimulatorModel {
     private time = 0
     private decisionVectorStack: Array<Int8Array> = []
     private delayIndicatorVectorStack: Array<Int8Array> = []
+    private firingVectorStack: Array<Int8Array>
     private outputSpikeTrains: Map<number, Array<number>> = new Map()
     // Binding callback functions
     private onChange: (configurationVector: Int8Array, delayStatusVector: Int8Array,
@@ -104,12 +104,15 @@ export class SimulatorModel {
         this.spikeTrainVector = wasmMalloc(new Int8Array(system.getRuleCount()))
         this.spikeTrainVectors = system.getSpikeTrainVectors()
 
+        this.time = 0
+        this.decisionVectorStack.length = 0
+        this.delayIndicatorVectorStack.length = 0
+        this.firingVectorStack = [this.initialConfigurationVector.map(_ => 0)]
         this.outputSpikeTrains.clear()
         for (const index of system.getOutputNeuronIndices()) {
             this.outputSpikeTrains.set(index, [])
         }
-
-        this.time = 0
+        
         this.simulating = true
         this.isFirstSetup = false
     }
@@ -140,15 +143,13 @@ export class SimulatorModel {
             this.configurationVector.data.length
         )
 
+        // Push history
+        this.firingVectorStack.push(this.firingVector.data.slice())
         for (const [index, spikeTrain] of this.outputSpikeTrains.entries()) {
             spikeTrain.push(this.configurationVector.data[index])
             // Reset output neuron
             this.configurationVector.data[index] = 0
         }
-
-        console.log(this.spikeTrainVector.data)
-        console.log(this.ruleCountVector.data)
-        console.log(this.firingVector.data)
 
         this.onChange(this.configurationVector.data, this.delayStatusVector.data,
             this.firingVector.data, this.outputSpikeTrains)
@@ -168,12 +169,14 @@ export class SimulatorModel {
         this.delayIndicatorVector.data.set(this.delayIndicatorVectorStack.pop()!)
         // Get previous spike train vector
         this.spikeTrainVector.data.set(this.spikeTrainVectors[this.time--] ?? this.spikeTrainVector.data.fill(0))
+        // Get previous firing vector (peek after pop)
+        this.firingVectorStack.pop()
+        this.firingVector.data.set(this.firingVectorStack[this.firingVectorStack.length - 1])
+        console.log(this.firingVector.data)
 
-        // TODO: Fix wasm getPrev
         this.module._getPrev(
             this.configurationVector.offset,
             this.delayStatusVector.offset,
-            this.firingVector.offset,
             this.transposedSpikingTransitionMatrix.offset,
             this.delayVector.offset,
             this.ruleCountVector.offset,

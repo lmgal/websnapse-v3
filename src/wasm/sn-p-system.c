@@ -69,7 +69,7 @@ void getFiringVector(
         {
             if (indicatorVector[ruleIndex + j] || spikeTrainVector[ruleIndex + j])
             {
-                firingVector[ruleIndex + j] = 1;
+                firingVector[i] = 1;
                 break;
             }
         }
@@ -289,7 +289,6 @@ void getPrevConfigurationVector(
 void getPrev(
     int8_t configurationVector[],
     int8_t delayStatusVector[],
-    int8_t firingVector[],
     int8_t transposedTransitionMatrix[],
     int8_t delayVector[],
     int8_t ruleCountVector[],
@@ -322,14 +321,6 @@ void getPrev(
     getPrevDelayStatusVector(
         delayStatusVector,
         prevDelayIndicatorVector,
-        ruleCountVector,
-        neuronCount);
-
-    // Compute the prev previous indicator vector for prev firing vector
-    getFiringVector(
-        firingVector,
-        indicatorVector,
-        prevSpikeTrainVector,
         ruleCountVector,
         neuronCount);
 
