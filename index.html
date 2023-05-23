@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Websnapse v3</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
     <link rel="stylesheet" href="src/css/index.css">
@@ -41,6 +41,8 @@
         <button id="new-system-btn">New</button>
         <button id="import-system-btn">Import</button>
         <button id="export-system-btn">Export</button>
+        <button id="show-decision-history-btn">Show Decision History</button>
+        <button id="help-btn">Help</button>
     </nav>
     <div class="mid-container">
         <div id="left-panel">
@@ -147,6 +149,22 @@
         <li><button id="synapse-context-menu-edit-btn">Edit synapse</button></li>
         <li><button id="synapse-context-menu-delete-btn">Delete synapse</button></li>
     </ul>
+    <dialog id="decision-history">
+        <div class="modal-content">
+            <h1>Decision history</h1>
+            <table id="decision-history-table">
+                <thead>
+                    <tr id="decision-history-header">
+                        <!-- <th>Time</th> -->
+                    </tr>
+                </thead>
+                <tbody id="decision-history-body">
+                </tbody>
+        </div>
+        <div class="modal-buttons">
+            <button class="basic-button" id="decision-history-close-btn">Close</button>
+        </div>
+    </dialog>
 </body>
 
 </html>

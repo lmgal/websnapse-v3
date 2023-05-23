@@ -65,7 +65,8 @@ export class SimulatorModel {
     private outputSpikeTrains: Map<number, Array<number>> = new Map()
     // Binding callback functions
     private onChange: (configurationVector: Int8Array, delayStatusVector: Int8Array,
-        firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>) => void = () => { }
+        firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>, 
+        decisionVectorStack: Array<Int8Array>) => void = () => { }
     private onDecisionNeed: (configurationVector: Int8Array, delayStatusVector: Int8Array) => void = () => {}
 
     public constructor() {
@@ -152,7 +153,7 @@ export class SimulatorModel {
         }
 
         this.onChange(this.configurationVector.data, this.delayStatusVector.data,
-            this.firingVector.data, this.outputSpikeTrains)
+            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack)
     }
 
     /**
@@ -194,7 +195,7 @@ export class SimulatorModel {
         }
 
         this.onChange(this.configurationVector.data, this.delayStatusVector.data,
-            this.firingVector.data, this.outputSpikeTrains)
+            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack)
     }
 
     public getState() {
@@ -233,7 +234,7 @@ export class SimulatorModel {
         }
 
         this.onChange(this.configurationVector.data, this.delayStatusVector.data,
-            this.firingVector.data, this.outputSpikeTrains)
+            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack)
     }
 
     private _free() {

@@ -68,7 +68,8 @@ export class Presenter {
 
         // Bind simulator and graph view
         simulator.handleChange((configurationVector: Int8Array, delayStatusVector: Int8Array,
-            firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>) => {
+            firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>,
+            decisionVectorStack: Int8Array[]) => {
             // If not simulating, ignore
             if (!simulator.isSimulating()) return
 
@@ -121,6 +122,31 @@ export class Presenter {
             }
 
             graphView.endUpdate()
+
+            // Update decision history table
+            const ruleCountVector = system.getRuleCountVector()
+            uiView.setDecisionHistoryBody(decisionVectorStack.map((decisionVector,time) => {
+                let ruleIndex = 0
+                return system.getNeurons().map((neuron, i) => {
+                    if (neuron.getType() === REG_NEURON) {
+                        for (let j = 0; j < ruleCountVector[i]; j++) {
+                            if (decisionVector[ruleIndex + j]) {
+                                ruleIndex += ruleCountVector[i]
+                                return {
+                                    rule: neuron.getRules()[j].latex
+                                }
+                            }
+                        }
+                    } else if (neuron.getType() === INPUT_NEURON) {
+                        ruleIndex += ruleCountVector[i]
+                        return {
+                            spikeTrain: neuron.getSpikeTrain()[time]?.toString() ?? '0'
+                        }
+                    }
+                    ruleIndex += ruleCountVector[i]
+                    return {}
+                })
+            }))
         })
 
         // Handle events from graph view
@@ -392,6 +418,9 @@ export class Presenter {
                 simulator.setSystem(system)
                 simulator.setSimulating(true)
                 uiView.setPanelButtonsEnabled(false)
+                uiView.setDecisionHistoryHeader(
+                    system.getNeurons().map(neuron => neuron.getId())
+                )
             }
 
             if (isPlayBtn) {
@@ -424,6 +453,9 @@ export class Presenter {
                 simulator.setSystem(system)
                 simulator.setSimulating(true)
                 uiView.setPanelButtonsEnabled(false)
+                uiView.setDecisionHistoryHeader(
+                    system.getNeurons().map(neuron => neuron.getId())
+                )
             }
 
             // If currently on auto, stop it
@@ -655,6 +687,14 @@ export class Presenter {
         })
         uiView.handleSynapseContextMenuDeleteBtn(() => {
             system.removeSynapse(this.focusedSynapseIds!.fromId, this.focusedSynapseIds!.toId)
+        })
+
+        // Decision history handler
+        uiView.handleDecisionHistoryShowBtn(() => {
+            uiView.showDecisionHistory()
+        })
+        uiView.handleDecisionHistoryCloseBtn(() => {
+            uiView.hideDecisionHistory()
         })
     }
 

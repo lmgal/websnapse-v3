@@ -1,5 +1,6 @@
 import { ApplicableRule, RuleSelectBuilder } from "../components/rule-select"
 import { RuleInputBuilder } from "../components/rule-input"
+import katex from "katex"
 
 export type PanelButtonId = 'add-reg-neuron-btn' | 'add-input-neuron-btn' | 'add-output-neuron-btn' | 'add-synapse-btn'
 export type SimulatorButtonId = 'next-btn' | 'prev-btn' | 'play-pause-btn' | 'stop-btn'
@@ -66,6 +67,13 @@ export class UIView {
     private synapseContextMenu = document.getElementById('synapse-context-menu') as HTMLUListElement
     private synapseContextMenuEditBtn = document.getElementById('synapse-context-menu-edit-btn') as HTMLButtonElement
     private synapseContextMenuDeleteBtn = document.getElementById('synapse-context-menu-delete-btn') as HTMLButtonElement
+
+    // Decision history 
+    private decisionHistory = document.getElementById('decision-history') as HTMLDialogElement
+    private decisionHistoryHeader = document.getElementById('decision-history-header') as HTMLTableRowElement
+    private decisionHistoryBody = document.getElementById('decision-history-body') as HTMLTableSectionElement
+    private decisionHistoryShowBtn = document.getElementById('show-decision-history-btn') as HTMLButtonElement
+    private decisionHistoryCloseBtn = document.getElementById('decision-history-close-btn') as HTMLButtonElement
 
     public constructor() {
         // Convert necessary input to MathQuill input
@@ -357,6 +365,69 @@ export class UIView {
         this.synapseContextMenu.style.display = 'none'
     }
 
+    /**
+     * Set the decision history header row
+     * Should be called before showing the decision history table
+     * @param neuronIds 
+     */
+    public setDecisionHistoryHeader(neuronIds: Array<string>) {
+        this.decisionHistoryHeader.innerHTML = ''
+        const timeHeader = document.createElement('th')
+        timeHeader.innerText = 'Time'
+        this.decisionHistoryHeader.appendChild(timeHeader)
+        for (const neuronId of neuronIds) {
+            const header = document.createElement('th')
+            header.innerText = neuronId
+            this.decisionHistoryHeader.appendChild(header)
+        }
+    }
+
+    /**
+     * Set the decision history modal body
+     * @param decisionHistories Array of decisions for each neuron at each time step
+     * Rule is shown for regular neurons, spike train is shown for input/output neurons
+     */
+    public setDecisionHistoryBody(decisionHistories: Array<Array<{
+        rule?: string,
+        spikeTrain?: string
+    }>>) {
+        this.decisionHistoryBody.innerHTML = ''
+        for (let i = 0; i < decisionHistories.length; i++) {
+            const row = document.createElement('tr')
+            // Append time
+            const timeCell = document.createElement('td')
+            timeCell.innerText = i.toString()
+            row.appendChild(timeCell)
+            // Append corresponding decision
+            for (const decision of decisionHistories[i]) {
+                const decisionCell = document.createElement('td')
+                if (decision.rule) {
+                    katex.render(decision.rule, decisionCell)
+                } else if (decision.spikeTrain) {
+                    katex.render(decision.spikeTrain, decisionCell)
+                } else {
+                    decisionCell.innerText = '-'
+                }
+                row.appendChild(decisionCell)
+            }
+            this.decisionHistoryBody.appendChild(row)
+        }
+    }
+
+    /**
+     * Show the decision history modal
+     */
+    public showDecisionHistory() {
+        this.decisionHistory.showModal()
+    }
+
+    /**
+     * Hide the decision history modal
+     */
+    public hideDecisionHistory() {
+        this.decisionHistory.close()
+    }
+
     // Handler methods
     // Navigation bar
     public handleNewSystemBtn(handler: () => void) {
@@ -482,5 +553,13 @@ export class UIView {
     }
     public handleSynapseContextMenuDeleteBtn(handler: () => void) {
         this.synapseContextMenuDeleteBtn.addEventListener('click', handler)
+    }
+
+    // Decision history
+    public handleDecisionHistoryShowBtn(handler : () => void) {
+        this.decisionHistoryShowBtn.addEventListener('click', handler)
+    }
+    public handleDecisionHistoryCloseBtn(handler : () => void) {
+        this.decisionHistoryCloseBtn.addEventListener('click', handler)
     }
 }
