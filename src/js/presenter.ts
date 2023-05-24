@@ -384,24 +384,7 @@ export class Presenter {
 
         // Decision controls handler
         uiView.handleDecisionConfirmBtn((selectedIndices) => {
-            const neurons = system.getNeurons()
-            const ruleCountVector = system.getRuleCountVector()
-            const time = simulator.getState().time
-
-            let neuronIndex = 0
-            let startingRuleIndex = ruleCountVector[0]
             const decisionVector = Array(system.getRuleCount()).fill(0).map((_, i) => {
-                // Get neuron index from rule index
-                if (i >= startingRuleIndex) {
-                    neuronIndex++
-                    startingRuleIndex += ruleCountVector[neuronIndex]
-                }
-
-                if (neurons[neuronIndex].getType() === OUTPUT_NEURON)
-                    return 0
-                if (neurons[neuronIndex].getType() === INPUT_NEURON)
-                    return neurons[neuronIndex].getSpikeTrain()[time]
-
                 return selectedIndices.includes(i) ? 1 : 0
             })
             simulator.next(new Int8Array(decisionVector))
@@ -695,6 +678,14 @@ export class Presenter {
         })
         uiView.handleDecisionHistoryCloseBtn(() => {
             uiView.hideDecisionHistory()
+        })
+
+        // Help dialog handler
+        uiView.handleHelpDialogShowBtn(() => {
+            uiView.showHelpDialog()
+        })
+        uiView.handleHelpDialogCloseBtn(() => {
+            uiView.hideHelpDialog()
         })
     }
 

@@ -22,7 +22,7 @@
         </div>
     </template>
     <template id="rule-input-container-template">
-        <div class="rule-input-container one-line">
+        <div class="rule-input-container row">
             <button type="button" class="icon-button">
                 <span class="material-symbols-outlined">
                     close
@@ -62,7 +62,7 @@
         <div id="graph-container"></div>
     </div>
     <div id="simulator-panel">
-        <div class="one-line">
+        <div class="row">
             <p title="">Mode: </p>
             <select id="simulator-mode-select">
                 <option>Pseudo-random</option>
@@ -70,20 +70,20 @@
             </select>
         </div>
         <div class="simulator-buttons">
-            <button class="icon-button" id="prev-btn">
+            <button class="icon-button" id="prev-btn" title="Previous">
                 <span class="material-symbols-outlined">skip_previous</span>
             </button>
-            <button class="icon-button" id="play-pause-btn">
+            <button class="icon-button" id="play-pause-btn" title="Play">
                 <span class="material-symbols-outlined">play_arrow</span> <!-- pause -->
             </button>
-            <button class="icon-button" id="stop-btn">
+            <button class="icon-button" id="stop-btn" title="Stop">
                 <span class="material-symbols-outlined">stop</span>
             </button>
-            <button class="icon-button" id="next-btn">
+            <button class="icon-button" id="next-btn" title="Next">
                 <span class="material-symbols-outlined">skip_next</span>
             </button>
         </div>
-        <!-- <div class="one-line">
+        <!-- <div class="row">
             <p>Time</p>
             <input type="range" min="0" max="1"></input>
         </div> -->
@@ -101,12 +101,12 @@
     <dialog id="neuron-properties">
         <div class="modal-content">
             <h1 id="neuron-properties-title">Add Neuron</h1>
-            <div class="one-line">
+            <div class="row">
                 <p>ID: </p>
                 <div id="neuron-id"></div>
             </div>
             <span class="error-msg" id="neuron-id-error"></span>
-            <div class="one-line reg-neuron-property">
+            <div class="row reg-neuron-property">
                 <p>Spikes: </p>
                 <input type="number" id="neuron-spikes"></input>
             </div>
@@ -116,7 +116,7 @@
                 <ul id="neuron-rule-list"></ul>
                 <button type="button" class="basic-button contained" id="neuron-rule-add-btn">Add rule</button>
             </div>
-            <div class="one-line non-reg-neuron-property">
+            <div class="row non-reg-neuron-property">
                 <p>Spike train: </p>
                 <div id="neuron-spike-train"></input>
             </div>
@@ -130,7 +130,7 @@
     <dialog id="synapse-properties">
         <div class="modal-content">
             <h1 id="synapse-properties-title">Add synapse</h1>
-            <div class="one-line">
+            <div class="row">
                 <p>Weight: </p>
                 <input type="number" id="synapse-weight" placeholder="0"></input>
             </div>
@@ -149,6 +149,68 @@
         <li><button id="synapse-context-menu-edit-btn">Edit synapse</button></li>
         <li><button id="synapse-context-menu-delete-btn">Delete synapse</button></li>
     </ul>
+    <dialog id="help-dialog">
+        <div class="modal-content">
+            <h1>Help</h1>
+            <h2>Introduction</h2>
+            <p>WebSnapse v3 is a visual simulator of Spiking Neural P Systems, proposed by
+                Ionescu, Păun and Yokomori in 2006.
+                <a href="https://www.gcn.us.es/files/Spiking%20neural%20p%20systems.pdf">(Link to Paper)</a>. 
+                Following the previous iterations, this version of WebSnapse aims to improve user experience
+                and provide a more intuitive interface. This version also introduces the use of 
+                matrix representations for computing the state of the system and using WebAssembly 
+                for faster computation.
+            </p>
+            <p>Similar to WebSnapse v2, this simulator can also simulate extended SN P Systems,
+                SN P Systems with weighted synapses, and SN P Systems with input neurons.
+            </p>
+            <h2>Creating the system</h2>
+            <h3>Adding neurons</h3>
+            <p>You can add neurons by using the buttons on the left panel. Hovering buttons
+                will show a tooltip with the name of the button. Clicking on the button, then 
+                clicking on the canvas will show a configuration dialog for the neuron. The configuration
+                dialog will show an ID input for any neuron type where you can use LaTeX syntax to write.
+                After confirming, the neuron will be added to the canvas where you clicked.
+            </p>
+            <h3>Regular neurons</h3>
+            <p>For the dialog of regular neurons, there is the spike input, and the rule input.
+                On the spike input, you can write a number to indicate the initial number of spikes 
+                in the neuron. For rule input, you can write a rule in LaTeX syntax. You can also
+                add rules by clicking the "Add rule" button. You can remove rules by clicking the 
+                X button on the right of the rule.
+            </p>
+            <h3>Input neurons</h3>
+            <p>For the dialog of input neurons, there is the spike train input. On the spike train
+                input, you can write a sequence of numbers to indicate the spike
+                train of the neuron. You can also use LaTeX syntax to have a more compact representation,
+                with some symbols having exponents. For example, instead 1001, you can write 10^21.
+            </p>
+            <h3>Adding synapses</h3>
+            <p>You can click on the Add Synapse button on the left panel then click two neurons
+                to add a synapse between them. A configuration dialog will appear where you can
+                write the weight of the synapse. Note that you cannot add a synapse from a neuron to itself
+                and you cannot add multiple synapses pointing from a neuron to another neuron. You also
+                cannot add a synapses from an output neuron.
+            </p>
+            <h3>Editing neurons and synapses</h3>
+            <p>You can right-click a neuron or a synapse to show the context menu for each.
+                The context menu will have the options to edit or delete the neuron or synapse.
+                Note that you cannot edit the ID of a neuron.
+            </p>
+            <h2>Simulating</h2>
+            <h3>Simulation mode</h3>
+            <p>In Pseudo-random mode, by clicking the play or next button, the simulator will choose
+                by itself which rule to fire in case where there are multiple rules that can be fired 
+                from the same neuron. In Guided mode the simulator will show a dialog where you can 
+                choose which rule to fire. The simulator will also show if a neuron cannot fire any rule
+                or if it is closed.
+            </p>
+            <p>You can use the buttons on the bottom panel to simulate the system displayed.</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="basic-button" id="help-dialog-close-btn">Close</button>
+        </div>
+    </dialog>
     <dialog id="decision-history">
         <div class="modal-content">
             <h1>Decision history</h1>

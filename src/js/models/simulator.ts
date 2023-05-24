@@ -173,7 +173,6 @@ export class SimulatorModel {
         // Get previous firing vector (peek after pop)
         this.firingVectorStack.pop()
         this.firingVector.data.set(this.firingVectorStack[this.firingVectorStack.length - 1])
-        console.log(this.firingVector.data)
 
         this.module._getPrev(
             this.configurationVector.offset,

@@ -75,6 +75,11 @@ export class UIView {
     private decisionHistoryShowBtn = document.getElementById('show-decision-history-btn') as HTMLButtonElement
     private decisionHistoryCloseBtn = document.getElementById('decision-history-close-btn') as HTMLButtonElement
 
+    // Help
+    private helpDialog = document.getElementById('help-dialog') as HTMLDialogElement
+    private helpDialogShowBtn = document.getElementById('help-btn') as HTMLButtonElement
+    private helpDialogCloseBtn = document.getElementById('help-dialog-close-btn') as HTMLButtonElement
+
     public constructor() {
         // Convert necessary input to MathQuill input
         this.MQ.MathField(this.neuronId)
@@ -114,6 +119,7 @@ export class UIView {
         button.disabled = disabled
     }
     public setPlayPauseBtnIcon(play: boolean) {
+        this.playPauseBtn.title = play ? 'Play' : 'Pause'
         this.playPauseBtn.children[0].innerHTML = play ? 'play_arrow' : 'pause'
     }
 
@@ -428,6 +434,20 @@ export class UIView {
         this.decisionHistory.close()
     }
 
+    /**
+     * Show the help dialog
+    */
+    public showHelpDialog() {
+        this.helpDialog.showModal()
+    }
+
+    /**
+     * Hide the help dialog
+     */
+    public hideHelpDialog() {
+        this.helpDialog.close()
+    }
+
     // Handler methods
     // Navigation bar
     public handleNewSystemBtn(handler: () => void) {
@@ -561,5 +581,13 @@ export class UIView {
     }
     public handleDecisionHistoryCloseBtn(handler : () => void) {
         this.decisionHistoryCloseBtn.addEventListener('click', handler)
+    }
+
+    // Help dialog
+    public handleHelpDialogShowBtn(handler : () => void) {
+        this.helpDialogShowBtn.addEventListener('click', handler)
+    }
+    public handleHelpDialogCloseBtn(handler : () => void) {
+        this.helpDialogCloseBtn.addEventListener('click', handler)
     }
 }

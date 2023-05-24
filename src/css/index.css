@@ -144,7 +144,7 @@ nav {
         color: black;
     }
 
-    .one-line {
+    .row {
         width: auto;
     }
 }
@@ -186,7 +186,7 @@ dialog {
 
 $bottom-right-btns : 50px;
 
-.one-line {
+.row {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -196,6 +196,21 @@ $bottom-right-btns : 50px;
 
 form {
     height: 100%;
+}
+
+#help-dialog {
+    width: 50%;
+
+    .modal-content {
+        overflow: auto;
+    }
+
+    p {
+        white-space: normal;
+        display : block; 
+        overflow-wrap: break-word; 
+        max-width : 100%;
+    }
 }
 
 .modal-content {
@@ -208,6 +223,14 @@ form {
 
     h1 {
         font-size: 20px;
+    }
+
+    h2 {
+        font-size: 17.5px;
+    }
+
+    h3 {
+        font-size: 15px;
     }
 
     p {
