@@ -306,10 +306,13 @@ export class Presenter {
                                 pos: neuronJSON.pos
                             })
                         } else if (neuronJSON.type === INPUT_NEURON) {
-                            builder.setSpikeTrain(neuronJSON.content as number[])
+                            const spikeTrain = this._stringToSpikeTrain(neuronJSON.content as string)
+                            if (!spikeTrain)
+                                throw new Error(`Invalid spike train: ${neuronJSON.content}`)
+                            builder.setSpikeTrain(spikeTrain)
                             // Create node in graph view
                             graphView.addNode(neuronJSON.id, {
-                                spikeTrain: this._spikeTrainToString(neuronJSON.content as number[]),
+                                spikeTrain: this._spikeTrainToString(spikeTrain!),
                                 pos: neuronJSON.pos
                             })
                         } else {

@@ -15,7 +15,7 @@ type Neuron = {
         y: number
     },
     rules?: Array<string>,
-    content?: number | Array<number>
+    content?: number | string
 }
 
 type Synapse = {
@@ -76,7 +76,7 @@ export class SystemJSON {
                 neuronJSON.rules = neuron.getRules().map(rule => rule.latex)
                 neuronJSON.content = neuron.getSpikes()
             } else if (type === INPUT_NEURON)
-                neuronJSON.content = neuron.getSpikeTrain()
+                neuronJSON.content = neuron.getSpikeTrain().join('')
 
             return neuronJSON
         })
