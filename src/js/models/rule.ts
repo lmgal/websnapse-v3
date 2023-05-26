@@ -7,9 +7,8 @@ export type Rule = {
 }   
 
 export const parseRule = (input: string) : Rule | null => {
-    const ruleRegex = new RegExp(/^([a|^()[\]+*\d\{\}(\\left)(\\right)(\\ast)]+)(\/a(\^[1-9]\d*)?)?(\\to|\\rightarrow)( a|\\lambda)(;(\d+))?$/)
+    const ruleRegex = new RegExp(/^([a|^()[\]+*\d\{\}(\\left)(\\right)(\\ast)]+)(\/a(\^[1-9]\d*|\^\{\d+\})?)?(\\to|\\rightarrow)( a(\^\d|\^\{\d+\})?|\\lambda)(;(\d+))?$/)
     const groups = ruleRegex.exec(input)
-
     if (!groups)
         return null
 
@@ -25,14 +24,49 @@ export const parseRule = (input: string) : Rule | null => {
     if (groups[12] && groups[8] === '\\lambda')
         return null
 
+    // Consume
+    let consume : number
+    if (groups[3]) {
+        if (groups[3].includes('{'))
+            // a/a^{n}
+            consume = Number.parseInt(groups[3].slice(2, -1))
+        else
+            // a/a^n
+            consume = Number.parseInt(groups[3].slice(1))
+    } else if (groups[2]) {
+        // a/a
+        consume = 1
+    } else if (groups[1] && groups[1].slice(2).length) {
+        // a^n
+        consume = Number.parseInt(groups[1].slice(2))
+    } else {
+        // a
+        consume = 1
+    }
+
+    // Produce
+    let produce : number
+    if (groups[6]) {
+        if (groups[6].includes('{'))
+            // \to a^{n}
+            produce = Number.parseInt(groups[6].slice(2, -1))
+        else
+            // \to a^n
+            produce = Number.parseInt(groups[6].slice(1))
+    } else if (groups[5] === '\\lambda') {
+        // \to\lambda
+        produce = 0
+    } else {
+        // \to a
+        produce = 1
+    }
+
     const rule = {
         latex: input,
         language: language,
-        consume: groups[3] ? Number.parseInt(groups[3].slice(1)) :
-            groups[2] ? 1 :
-            groups[1] && groups[1].slice(2).length ? Number.parseInt(groups[1].slice(2)) : 1,
-        produce: groups[5] === ' a' ? 1 : 0,
-        delay: groups[7] ? Number.parseInt(groups[7]) : 0
+        consume: consume,
+        produce: produce,
+        delay: groups[8] ? Number.parseInt(groups[8]) : 0
     }
 
     return rule

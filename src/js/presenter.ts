@@ -301,7 +301,7 @@ export class Presenter {
                             // Create node in graph view
                             graphView.addNode(neuronJSON.id, {
                                 spikes: neuronJSON.content as number,
-                                rules: neuronJSON.rules!.join('////'),
+                                rules: neuronJSON.rules!.join('\\\\'),
                                 delay: 0,
                                 pos: neuronJSON.pos
                             })

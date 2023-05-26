@@ -3,7 +3,7 @@ import { SNPSystemModel } from "./system"
 import { REG_NEURON, INPUT_NEURON, OUTPUT_NEURON, NeuronType } from "./neuron"
 
 type System = {
-    neurons: Array<Neuron>,
+    nodes: Array<Neuron>,
     synapses: Array<Synapse>
 }
 
@@ -35,7 +35,7 @@ export class SystemJSON {
         const parsed = JSON.parse(json) as System
 
         // Make it a bit cleaner for Presenter
-        const neurons = parsed.neurons.map(neuron => ({
+        const neurons = parsed.nodes.map(neuron => ({
             id: neuron.id,
             type: (neuron.type === 'regular' ? REG_NEURON 
                 : neuron.type === 'input' ? INPUT_NEURON 
@@ -57,7 +57,7 @@ export class SystemJSON {
      * @param graph 
      * @returns JSON string
      */
-    public static export(system: SNPSystemModel, graph: SvgGraphView){
+    public static export(system: SNPSystemModel, graph: SvgGraphView) {
         const neurons = system.getNeurons()
 
         const neuronsJSON = neurons.map(neuron => {
@@ -93,7 +93,7 @@ export class SystemJSON {
         }
 
         return JSON.stringify({
-            neurons: neuronsJSON,
+            nodes: neuronsJSON,
             synapses: synapsesJSON
         })
     }
