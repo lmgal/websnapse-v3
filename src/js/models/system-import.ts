@@ -3,7 +3,7 @@ import { SNPSystemModel } from "./system"
 import { REG_NEURON, INPUT_NEURON, OUTPUT_NEURON, NeuronType } from "./neuron"
 
 type System = {
-    nodes: Array<Neuron>,
+    neurons: Array<Neuron>,
     synapses: Array<Synapse>
 }
 
@@ -35,7 +35,7 @@ export class SystemJSON {
         const parsed = JSON.parse(json) as System
 
         // Make it a bit cleaner for Presenter
-        const neurons = parsed.nodes.map(neuron => ({
+        const neurons = parsed.neurons.map(neuron => ({
             id: neuron.id,
             type: (neuron.type === 'regular' ? REG_NEURON 
                 : neuron.type === 'input' ? INPUT_NEURON 
