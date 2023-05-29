@@ -1,6 +1,6 @@
 import { SNPSystemModel } from "./models/system"
 import { SimulatorModel } from "./models/simulator"
-import { SvgGraphView } from "./views/graph-view"
+import { GraphView } from "./views/graph-view"
 import { UIView, PanelButtonId } from "./views/ui-view"
 import { Neuron, REG_NEURON, INPUT_NEURON, OUTPUT_NEURON, NeuronBuilder } from "./models/neuron"
 import { Rule, parseRule } from "./models/rule"
@@ -23,7 +23,7 @@ export class Presenter {
     constructor(
         system: SNPSystemModel,
         simulator: SimulatorModel,
-        graphView: SvgGraphView,
+        graphView: GraphView,
         uiView: UIView) {
 
         // Bind system and graph view
@@ -70,15 +70,21 @@ export class Presenter {
         // TODO: Only edit nodes and edges that needs updating
         simulator.handleChange((configurationVector: Int8Array, delayStatusVector: Int8Array,
             firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>,
-            decisionVectorStack: Int8Array[]) => {
+            decisionVectorStack: Int8Array[], neuronUpdateVector: Int8Array,
+            synapseUpdateVector: Int8Array) => {
             // If not simulating, ignore
             if (!simulator.isSimulating()) return
+
+            console.log(neuronUpdateVector)
+            console.log(configurationVector)
 
             graphView.beginUpdate()
 
             // Change neuron states
             for (let i = 0; i < configurationVector.length; i++) {
-                // TODO: Change editNode to take into account only giving spikes and delay
+                if (neuronUpdateVector[i] !== 1)
+                    continue
+
                 if (system.getNeurons()[i].getType() === REG_NEURON) {
                     graphView.editNode(system.getNeurons()[i].getId(), {
                         spikes: configurationVector[i],
@@ -96,6 +102,9 @@ export class Presenter {
 
             // Change synapses if source neuron is spiking. Othwerwise, remove spiking
             for (let i = 0; i < firingVector.length; i++) {
+                if (synapseUpdateVector[i] !== 1)
+                    continue
+
                 const synapses = system.getSynapses().get(system.getNeurons()[i].getId())!
                 for (const synapse of synapses) {
                     graphView.editEdge(system.getNeurons()[i].getId(), synapse.toId, {

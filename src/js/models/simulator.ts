@@ -14,6 +14,8 @@ interface SNPSystemModule extends EmscriptenModule {
         configurationVectorOffset: number,
         delayStatusVectorOffset: number,
         firingVectorOffset: number,
+        neuronUpdateVectorOffset: number,
+        synapseUpdateVectorOffset: number,
         transposedSpikingTransitionMatrixOffset: number,
         delayVectorOffset: number,
         ruleCountVectorOffset: number,
@@ -27,6 +29,7 @@ interface SNPSystemModule extends EmscriptenModule {
     _getPrev(
         configurationVectorOffset: number,
         delayStatusVectorOffset: number,
+        neuronUpdateVectorOffset: number,
         transposedSpikingTransitionMatrixOffset: number,
         delayVectorOffset: number,
         ruleCountVectorOffset: number,
@@ -54,6 +57,8 @@ export class SimulatorModel {
     private delayStatusVector!: WasmInt8Array
     private firingVector!: WasmInt8Array
     private delayIndicatorVector!: WasmInt8Array
+    private neuronUpdateVector!: WasmInt8Array
+    private synapseUpdateVector!: WasmInt8Array
     // Input to get next config
     private decisionVector!: WasmInt8Array
     private spikeTrainVector!: WasmInt8Array
@@ -66,7 +71,8 @@ export class SimulatorModel {
     // Binding callback functions
     private onChange: (configurationVector: Int8Array, delayStatusVector: Int8Array,
         firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>, 
-        decisionVectorStack: Array<Int8Array>) => void = () => { }
+        decisionVectorStack: Array<Int8Array>, neuronUpdateVector: Int8Array, 
+        synapseUpdateVector: Int8Array) => void = () => { }
     private onDecisionNeed: (configurationVector: Int8Array, delayStatusVector: Int8Array) => void = () => {}
 
     public constructor() {
@@ -100,6 +106,8 @@ export class SimulatorModel {
         this.delayStatusVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
         this.firingVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
         this.delayIndicatorVector = wasmMalloc(this.delayVector.data.map(_ => 0))
+        this.neuronUpdateVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
+        this.synapseUpdateVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
 
         this.decisionVector = wasmMalloc(new Int8Array(system.getRuleCount()))
         this.spikeTrainVector = wasmMalloc(new Int8Array(system.getRuleCount()))
@@ -134,6 +142,8 @@ export class SimulatorModel {
             this.configurationVector.offset,
             this.delayStatusVector.offset,
             this.firingVector.offset,
+            this.neuronUpdateVector.offset,
+            this.synapseUpdateVector.offset,
             this.transposedSpikingTransitionMatrix.offset,
             this.delayVector.offset,
             this.ruleCountVector.offset,
@@ -153,7 +163,8 @@ export class SimulatorModel {
         }
 
         this.onChange(this.configurationVector.data, this.delayStatusVector.data,
-            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack)
+            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack,
+            this.neuronUpdateVector.data, this.synapseUpdateVector.data)
     }
 
     /**
@@ -172,11 +183,16 @@ export class SimulatorModel {
         this.spikeTrainVector.data.set(this.spikeTrainVectors[this.time--] ?? this.spikeTrainVector.data.fill(0))
         // Get previous firing vector (peek after pop)
         this.firingVectorStack.pop()
+        // Update synapse update vector
+        this.synapseUpdateVector.data.set(this.firingVector.data.map((value, index) => 
+            value !== this.firingVectorStack[this.firingVectorStack.length - 1][index] ? 1 : 0
+        ))
         this.firingVector.data.set(this.firingVectorStack[this.firingVectorStack.length - 1])
 
         this.module._getPrev(
             this.configurationVector.offset,
             this.delayStatusVector.offset,
+            this.neuronUpdateVector.offset,
             this.transposedSpikingTransitionMatrix.offset,
             this.delayVector.offset,
             this.ruleCountVector.offset,
@@ -194,7 +210,8 @@ export class SimulatorModel {
         }
 
         this.onChange(this.configurationVector.data, this.delayStatusVector.data,
-            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack)
+            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack,
+            this.neuronUpdateVector.data, this.synapseUpdateVector.data)
     }
 
     public getState() {
@@ -232,8 +249,13 @@ export class SimulatorModel {
             this.outputSpikeTrains.set(index, [])
         }
 
+        // Set update vectors to all 1s
+        this.neuronUpdateVector.data.fill(1)
+        this.synapseUpdateVector.data.fill(1)
+
         this.onChange(this.configurationVector.data, this.delayStatusVector.data,
-            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack)
+            this.firingVector.data, this.outputSpikeTrains, this.decisionVectorStack,
+            this.neuronUpdateVector.data, this.synapseUpdateVector.data)
     }
 
     private _free() {
