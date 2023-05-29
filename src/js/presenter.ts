@@ -75,9 +75,6 @@ export class Presenter {
             // If not simulating, ignore
             if (!simulator.isSimulating()) return
 
-            console.log(neuronUpdateVector)
-            console.log(configurationVector)
-
             graphView.beginUpdate()
 
             // Change neuron states
