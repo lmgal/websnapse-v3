@@ -1,4 +1,4 @@
-import { SvgGraphView } from "../views/graph-view"
+import { GraphView } from "../views/graph-view"
 import { SNPSystemModel } from "./system"
 import { REG_NEURON, INPUT_NEURON, OUTPUT_NEURON, NeuronType } from "./neuron"
 
@@ -57,7 +57,7 @@ export class SystemJSON {
      * @param graph 
      * @returns JSON string
      */
-    public static export(system: SNPSystemModel, graph: SvgGraphView) {
+    public static export(system: SNPSystemModel, graph: GraphView) {
         const neurons = system.getNeurons()
 
         const neuronsJSON = neurons.map(neuron => {
@@ -75,7 +75,9 @@ export class SystemJSON {
             if (type === REG_NEURON){
                 neuronJSON.rules = neuron.getRules().map(rule => rule.latex)
                 neuronJSON.content = neuron.getSpikes()
-            } else if (type === INPUT_NEURON)
+            } 
+            
+            if (type === INPUT_NEURON)
                 neuronJSON.content = neuron.getSpikeTrain().join('')
 
             return neuronJSON

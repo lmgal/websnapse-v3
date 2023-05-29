@@ -67,6 +67,7 @@ export class Presenter {
         })
 
         // Bind simulator and graph view
+        // TODO: Only edit nodes and edges that needs updating
         simulator.handleChange((configurationVector: Int8Array, delayStatusVector: Int8Array,
             firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>,
             decisionVectorStack: Int8Array[]) => {
