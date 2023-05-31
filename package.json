@@ -16,7 +16,10 @@
   ],
   "license": "ISC",
   "dependencies": {
+    "graphology": "^0.25.1",
+    "graphology-layout-force": "^0.2.4",
     "katex": "^0.16.4",
+    "sigma": "2.4.0",
     "vivagraphjs": "^0.12.0"
   },
   "devDependencies": {

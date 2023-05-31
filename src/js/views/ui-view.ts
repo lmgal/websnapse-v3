@@ -408,9 +408,13 @@ export class UIView {
             for (const decision of decisionHistories[i]) {
                 const decisionCell = document.createElement('td')
                 if (decision.rule) {
-                    katex.render(decision.rule, decisionCell)
+                    katex.render(decision.rule, decisionCell, {
+                        output: 'mathml'
+                    })
                 } else if (decision.spikeTrain) {
-                    katex.render(decision.spikeTrain, decisionCell)
+                    katex.render(decision.spikeTrain, decisionCell, {
+                        output: 'mathml'
+                    })
                 } else {
                     decisionCell.innerText = '-'
                 }

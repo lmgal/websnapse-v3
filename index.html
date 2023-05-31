@@ -11,6 +11,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+    <script type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     <script type="module" src="src/js/index.ts"></script>
     <template id="rule-select-template">
         <div class="rule-select">
@@ -34,8 +35,6 @@
 </head>
 
 <body>
-    <!-- This is for having relative measurements to be used in rendering LaTeX -->
-    <div id="hidden-div" style="position: absolute; left: -9999px; top: -9999px;"></div>
     <nav>
         <h1>WebSnapse v3</h1>
         <button id="new-system-btn">New</button>

@@ -19,4 +19,5 @@ export default defineConfig({
   resolve: {
     extensions: ['.ts', '.js'],
   },
+  assetsInclude: ['**/*.glsl']
 })

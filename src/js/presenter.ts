@@ -67,13 +67,10 @@ export class Presenter {
         })
 
         // Bind simulator and graph view
-        // TODO: Only edit nodes and edges that needs updating
         simulator.handleChange((configurationVector: Int8Array, delayStatusVector: Int8Array,
             firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>,
             decisionVectorStack: Int8Array[], neuronUpdateVector: Int8Array,
             synapseUpdateVector: Int8Array) => {
-            // If not simulating, ignore
-            if (!simulator.isSimulating()) return
 
             graphView.beginUpdate()
 
@@ -109,25 +106,6 @@ export class Presenter {
                     })
                 }
             }
-
-            // If simulator has reached t=0, disable previous button
-            if (simulator.getState().time === 0)
-                uiView.setSimulatorButton('prev-btn', true)
-            else
-                uiView.setSimulatorButton('prev-btn', false)
-
-            // If simulator has reached final configuration, disable next button
-            // If simulator is on auto, toggle play button and disable it
-            if (simulator.hasReachedFinalConfiguration(system.getNeurons())) {
-                uiView.setSimulatorButton('next-btn', true)
-                uiView.setPlayPauseBtnIcon(true)
-                uiView.setSimulatorButton('play-pause-btn', true)
-            }
-            else {
-                uiView.setSimulatorButton('next-btn', false)
-                uiView.setSimulatorButton('play-pause-btn', false)
-            }
-
             graphView.endUpdate()
 
             // Update decision history table
@@ -154,6 +132,36 @@ export class Presenter {
                     return {}
                 })
             }))
+
+            // If simulation is stopped, enable all simulator buttons
+            if (!simulator.isSimulating()) {
+                uiView.setSimulatorButton('prev-btn', false)
+                uiView.setSimulatorButton('next-btn', false)
+                uiView.setSimulatorButton('play-pause-btn', false)
+                uiView.setSimulatorButton('stop-btn', false)
+                return 
+            }
+
+            // If simulator has reached t=0, disable previous button
+            if (simulator.getState().time === 0)
+                uiView.setSimulatorButton('prev-btn', true)
+            else
+                uiView.setSimulatorButton('prev-btn', false)
+
+            // If simulator has reached final configuration, disable next button
+            // If simulator is on auto, toggle play button and disable it
+            if (simulator.hasReachedFinalConfiguration(system.getNeurons())) {
+                uiView.setSimulatorButton('next-btn', true)
+                uiView.setPlayPauseBtnIcon(true)
+                uiView.setSimulatorButton('play-pause-btn', true)
+            }
+            else {
+                uiView.setSimulatorButton('next-btn', false)
+                uiView.setSimulatorButton('play-pause-btn', false)
+            }
+            // Enable stop button since it was previously disabled 
+            // to prevent multiple clicks
+            uiView.setSimulatorButton('stop-btn', false)
         })
 
         // Handle events from graph view
@@ -433,15 +441,27 @@ export class Presenter {
             if (!simulator.isSimulating())
                 return
 
-            simulator.reset()
+            // Disable simulator buttons to prevent multiple clicks
+            uiView.setSimulatorButton('prev-btn', true)
+            uiView.setSimulatorButton('next-btn', true)
+            uiView.setSimulatorButton('stop-btn', true)
+            uiView.setSimulatorButton('play-pause-btn', true)
+
             simulator.stopAutoSimulation()
             simulator.setSimulating(false)
+            simulator.reset()
 
             uiView.setPanelButtonsEnabled(true)
         })
         uiView.handleNextBtn(() => {
+            // Disable simulator buttons to prevent multiple clicks
+            uiView.setSimulatorButton('prev-btn', true)
+            uiView.setSimulatorButton('next-btn', true)
+            uiView.setSimulatorButton('stop-btn', true)
+            uiView.setSimulatorButton('play-pause-btn', true)
+
             // If not yet simulating, set up the simulator with the system
-            // and start simulating
+            // and start simulating')
             if (!simulator.isSimulating()) {
                 simulator.setSystem(system)
                 simulator.setSimulating(true)
@@ -509,6 +529,12 @@ export class Presenter {
             // If not yet simulating, ignore
             if (!simulator.isSimulating())
                 return
+
+            // Disable panel buttons to prevent multiple clicks
+            uiView.setSimulatorButton('prev-btn', true)
+            uiView.setSimulatorButton('next-btn', true)
+            uiView.setSimulatorButton('stop-btn', true)
+            uiView.setSimulatorButton('play-pause-btn', true)
 
             // If currently on auto, stop it
             if (simulator.isAuto())
