@@ -67,71 +67,94 @@ export class Presenter {
         })
 
         // Bind simulator and graph view
-        simulator.handleChange((configurationVector: Int8Array, delayStatusVector: Int8Array,
+        simulator.handleChange(async (configurationVector: Int8Array, delayStatusVector: Int8Array,
             firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>,
             decisionVectorStack: Int8Array[], neuronUpdateVector: Int8Array,
             synapseUpdateVector: Int8Array) => {
 
-            graphView.beginUpdate()
+            console.timeEnd('WASM Compute')
+            console.time('Render Update')            
 
             // Change neuron states
-            for (let i = 0; i < configurationVector.length; i++) {
-                if (neuronUpdateVector[i] !== 1)
-                    continue
-
-                if (system.getNeurons()[i].getType() === REG_NEURON) {
-                    graphView.editNode(system.getNeurons()[i].getId(), {
-                        spikes: configurationVector[i],
-                        delay: delayStatusVector[i]
-                    })
+            const renderNeuronUpdate = async () => {
+                for (let i = 0; i < configurationVector.length; i++) {
+                    if (neuronUpdateVector[i] !== 1)
+                        continue
+    
+                    if (system.getNeurons()[i].getType() === REG_NEURON) {
+                        graphView.editNode(system.getNeurons()[i].getId(), {
+                            spikes: configurationVector[i],
+                            delay: delayStatusVector[i]
+                        })
+                    }
                 }
             }
-
+            
             // Change output spike trains
-            for (const [index, spikeTrain] of outputSpikeTrains.entries()) {
-                graphView.editNode(system.getNeurons()[index].getId(), {
-                    spikeTrain: this._spikeTrainToString(spikeTrain)
-                })
-            }
+            const renderOutputNeuronUpdate = async () => {
+                for (const [index, spikeTrain] of outputSpikeTrains.entries()) {
+                    graphView.editNode(system.getNeurons()[index].getId(), {
+                        spikeTrain: this._spikeTrainToString(spikeTrain)
+                    })
+                }
+            }            
 
             // Change synapses if source neuron is spiking. Othwerwise, remove spiking
-            for (let i = 0; i < firingVector.length; i++) {
-                if (synapseUpdateVector[i] !== 1)
-                    continue
-
-                const synapses = system.getSynapses().get(system.getNeurons()[i].getId())!
-                for (const synapse of synapses) {
-                    graphView.editEdge(system.getNeurons()[i].getId(), synapse.toId, {
-                        spiking: firingVector[i] === 1
-                    })
+            const renderSynapseUpdate = async () => {
+                for (let i = 0; i < firingVector.length; i++) {
+                    if (synapseUpdateVector[i] !== 1)
+                        continue
+    
+                    const synapses = system.getSynapses().get(system.getNeurons()[i].getId())!
+                    for (const synapse of synapses) {
+                        graphView.editEdge(system.getNeurons()[i].getId(), synapse.toId, {
+                            spiking: firingVector[i] === 1
+                        })
+                    }
                 }
             }
-            graphView.endUpdate()
+            
+            const renderGraphUpdate = async () => {
+                graphView.beginUpdate()
+                const neuronUpdatePromise = renderNeuronUpdate()
+                const outputUpdatePromise = renderOutputNeuronUpdate()
+                const synapseUpdatePromise = renderSynapseUpdate()
+                await Promise.all([neuronUpdatePromise, outputUpdatePromise, synapseUpdatePromise])
+                graphView.endUpdate()
+            }
 
             // Update decision history table
-            const ruleCountVector = system.getRuleCountVector()
-            uiView.setDecisionHistoryBody(decisionVectorStack.map((decisionVector,time) => {
-                let ruleIndex = 0
-                return system.getNeurons().map((neuron, i) => {
-                    if (neuron.getType() === REG_NEURON) {
-                        for (let j = 0; j < ruleCountVector[i]; j++) {
-                            if (decisionVector[ruleIndex + j]) {
-                                ruleIndex += ruleCountVector[i]
-                                return {
-                                    rule: neuron.getRules()[j].latex
+            const renderDecisionHistoryUpdate = async () => {
+                const ruleCountVector = system.getRuleCountVector()
+                uiView.setDecisionHistoryBody(await Promise.all(decisionVectorStack
+                .map(async (decisionVector,time) => {
+                    let ruleIndex = 0
+                    return system.getNeurons().map((neuron, i) => {
+                        if (neuron.getType() === REG_NEURON) {
+                            for (let j = 0; j < ruleCountVector[i]; j++) {
+                                if (decisionVector[ruleIndex + j]) {
+                                    ruleIndex += ruleCountVector[i]
+                                    return {
+                                        rule: neuron.getRules()[j].latex
+                                    }
                                 }
                             }
+                        } else if (neuron.getType() === INPUT_NEURON) {
+                            ruleIndex += ruleCountVector[i]
+                            return {
+                                spikeTrain: neuron.getSpikeTrain()[time]?.toString() ?? '0'
+                            }
                         }
-                    } else if (neuron.getType() === INPUT_NEURON) {
                         ruleIndex += ruleCountVector[i]
-                        return {
-                            spikeTrain: neuron.getSpikeTrain()[time]?.toString() ?? '0'
-                        }
-                    }
-                    ruleIndex += ruleCountVector[i]
-                    return {}
-                })
-            }))
+                        return {}
+                    })
+                })))
+            }
+            
+            await Promise.all([
+                renderGraphUpdate(),
+                renderDecisionHistoryUpdate()
+            ])
 
             // If simulation is stopped, enable all simulator buttons
             if (!simulator.isSimulating()) {
@@ -162,6 +185,8 @@ export class Presenter {
             // Enable stop button since it was previously disabled 
             // to prevent multiple clicks
             uiView.setSimulatorButton('stop-btn', false)
+
+            console.timeEnd('Render Update')
         })
 
         // Handle events from graph view
@@ -274,7 +299,6 @@ export class Presenter {
         uiView.handleNewSystemBtn(() => {
             // Stop simulation if it is running
             if (simulator.isSimulating()) {
-                simulator.reset()
                 simulator.stopAutoSimulation()
                 simulator.setSimulating(false)
                 uiView.setPanelButtonsEnabled(true)
@@ -284,7 +308,6 @@ export class Presenter {
         uiView.handleImportSystemBtn(() => {
             // Stop simulation if it is running
             if (simulator.isSimulating()) {
-                simulator.reset()
                 simulator.stopAutoSimulation()
                 simulator.setSimulating(false)
                 uiView.setPanelButtonsEnabled(true)
@@ -446,6 +469,8 @@ export class Presenter {
             }
         })
         uiView.handleStopBtn(() => {
+            console.log('Compute')
+
             if (!simulator.isSimulating())
                 return
 
@@ -462,6 +487,7 @@ export class Presenter {
             uiView.setPanelButtonsEnabled(true)
         })
         uiView.handleNextBtn(() => {
+            console.log('Compute')
             // Disable simulator buttons to prevent multiple clicks
             uiView.setSimulatorButton('prev-btn', true)
             uiView.setSimulatorButton('next-btn', true)

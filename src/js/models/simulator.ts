@@ -234,7 +234,7 @@ export class SimulatorModel {
         return hasNoApplicableRule && this.time >= lastInputSpikeTime
     }
 
-    public reset() {
+    public async reset() {
         this.time = 0
         // Reset vectors
         this.configurationVector.data.set(this.initialConfigurationVector)
