@@ -213,22 +213,30 @@ export class Presenter {
             if (this.fromNeuronId === null) {
                 // If the neuron is an output neuron, ignore
                 if (system.getNeurons().find(neuron => neuron.getId() === nodeId)!
-                .getType() === OUTPUT_NEURON)
+                .getType() === OUTPUT_NEURON) {
+                    uiView.showSnackbar(
+                        'Cannot have an output neuron as synapse source',
+                        3000
+                    )
                     return
+                }                    
 
                 this.fromNeuronId = nodeId
                 return
             }
-
-            // Check if there is already an existing synapse or if the neuron is the same
+            
+            // Check if there is already an existing synapse
             if (system.getSynapses().get(this.fromNeuronId)!.find(synapse => 
-                synapse.toId === this.toNeuronId) || this.fromNeuronId === nodeId) {
-                // Reset
-                this.activePanelButtonId = null
-                uiView.togglePanelButton('add-synapse-btn')
-                graphView.setGraphCursor('default')
-                this.fromNeuronId = null
-                this.toNeuronId = null
+                synapse.toId === nodeId)) {
+                // Show snackbar error
+                uiView.showSnackbar('Cannot have two synapses with the same connection', 3000)
+                return
+            }
+
+            // Check if trying to connect to itself
+            if (this.fromNeuronId === nodeId) {
+                // Show snackbar error
+                uiView.showSnackbar('Cannot connect a neuron to itself', 3000)
                 return
             }
 

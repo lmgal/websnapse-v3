@@ -80,6 +80,10 @@ export class UIView {
     private helpDialogShowBtn = document.getElementById('help-btn') as HTMLButtonElement
     private helpDialogCloseBtn = document.getElementById('help-dialog-close-btn') as HTMLButtonElement
 
+    // Snackbar
+    private snackBar = document.getElementById('snackbar') as HTMLDivElement
+    private snackBarText = document.getElementById('snackbar-text') as HTMLParagraphElement
+
     public constructor() {
         // Convert necessary input to MathQuill input
         this.MQ.MathField(this.neuronId)
@@ -450,6 +454,19 @@ export class UIView {
      */
     public hideHelpDialog() {
         this.helpDialog.close()
+    }
+
+    /**
+     * Display the snackbar for a certain duration
+     * @param text Text to display
+     * @param duration Duration to display snackbar in milliseconds
+     */
+    public showSnackbar(text: string, duration: number) {
+        this.snackBarText.innerText = text
+        this.snackBar.classList.add('show')
+        setTimeout(() => {
+            this.snackBar.classList.remove('show')
+        }, duration)
     }
 
     // Handler methods

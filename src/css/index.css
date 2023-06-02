@@ -3,6 +3,8 @@ $highlight-color: #333;
 $text-color: #eee;
 $error-text-color: #ff0000;
 $panel-width: 47.5px;
+$simulator-panel-height: 10%;
+$snackbar-bottom: calc($simulator-panel-height + 30px);
 
 html {
     height: 100%;
@@ -129,7 +131,7 @@ nav {
 }
 
 #simulator-panel {
-    height: 10%;
+    height: $simulator-panel-height;
     width: 100%;
     background-color: $background-color;
     display: flex;
@@ -407,4 +409,50 @@ span {
         min-width: 100px;
         white-space: nowrap;
     }
+}
+
+#snackbar {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: $background-color;
+    color:$text-color;
+    text-align: center;
+    border-radius: 4px;
+    padding: 10px;
+    position: fixed;
+    z-index: 1;
+    left: calc(100% - 300px);
+    bottom: $snackbar-bottom;
+    font-size: 15px;
+
+    p {
+        direction: rtl;
+    }
+}
+
+#snackbar.show {
+    visibility: visible;
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes fadein {
+    from {bottom: $simulator-panel-height; opacity: 0;} 
+    to {bottom: $snackbar-bottom; opacity: 1;}
+}
+
+@keyframes fadein {
+    from {bottom: $simulator-panel-height; opacity: 0;}
+    to {bottom: $snackbar-bottom; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+    from {bottom: $snackbar-bottom; opacity: 1;} 
+    to {bottom: $simulator-panel-height; opacity: 0;}
+}
+
+@keyframes fadeout {
+    from {bottom: $snackbar-bottom; opacity: 1;}
+    to {bottom: $simulator-panel-height; opacity: 0;}
 }
