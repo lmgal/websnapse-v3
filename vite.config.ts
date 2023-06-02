@@ -19,5 +19,8 @@ export default defineConfig({
   resolve: {
     extensions: ['.ts', '.js'],
   },
-  assetsInclude: ['**/*.glsl']
+  assetsInclude: ['**/*.glsl'],
+  // esbuild: {
+  //   drop: ['console', 'debugger']
+  // }
 })

@@ -18,6 +18,7 @@ export class Presenter {
     private fromNeuronId: string | null = null
     private toNeuronId: string | null = null
     // State for simulation
+    private isNewSystem = true
     private isAuto = false
 
     constructor(
@@ -37,9 +38,12 @@ export class Presenter {
                 spikeTrain: spikeTrain,
                 pos: this.lastGraphClickPos
             })
+
+            this.isNewSystem = true
         })
         system.handleRemoveNeuron((neuron: Neuron) => {
             graphView.removeNode(neuron.getId())
+            this.isNewSystem = true
         })
         system.handleEditNeuron((neuronId: string, neuron: Neuron) => {
             const spikeTrain = this._spikeTrainToString(neuron.getSpikeTrain())
@@ -50,17 +54,22 @@ export class Presenter {
                 delay: neuron.getType() === REG_NEURON ? 0 : undefined,
                 spikeTrain: spikeTrain
             })
+
+            this.isNewSystem = true
         })
         system.handleAddSynapse((fromId: string, toId: string, weight: number) => {
             graphView.addEdge(fromId, toId, weight)
+            this.isNewSystem = true
         })
         system.handleRemoveSynapse((fromId: string, toId: string) => {
             graphView.removeEdge(fromId, toId)
+            this.isNewSystem = true
         })
         system.handleEditSynapse((fromId: string, toId: string, weight: number) => {
             graphView.editEdge(fromId, toId, {
                 weight: weight
             })
+            this.isNewSystem = true
         })
         system.handleReset(() => {
             graphView.reset()
@@ -72,8 +81,8 @@ export class Presenter {
             decisionVectorStack: Int8Array[], neuronUpdateVector: Int8Array,
             synapseUpdateVector: Int8Array) => {
 
-            console.timeEnd('WASM Compute')
-            console.time('Render Update')            
+            console.timeEnd('Compute')
+            console.time('Render')            
 
             // Change neuron states
             const renderNeuronUpdate = async () => {
@@ -186,7 +195,7 @@ export class Presenter {
             // to prevent multiple clicks
             uiView.setSimulatorButton('stop-btn', false)
 
-            console.timeEnd('Render Update')
+            console.timeEnd('Render')
         })
 
         // Handle events from graph view
@@ -302,6 +311,7 @@ export class Presenter {
                 simulator.stopAutoSimulation()
                 simulator.setSimulating(false)
                 uiView.setPanelButtonsEnabled(true)
+                this.isNewSystem = true
             }
             system.reset()
         })
@@ -311,6 +321,7 @@ export class Presenter {
                 simulator.stopAutoSimulation()
                 simulator.setSimulating(false)
                 uiView.setPanelButtonsEnabled(true)
+                this.isNewSystem = true
             }
 
             // Open file dialog
@@ -446,13 +457,17 @@ export class Presenter {
 
         // Simulator button handler
         uiView.handlePlayPauseBtn((isPlayBtn) => {
-            if (!simulator.isSimulating()) {
+            if (this.isNewSystem) {
                 simulator.setSystem(system)
-                simulator.setSimulating(true)
-                uiView.setPanelButtonsEnabled(false)
                 uiView.setDecisionHistoryHeader(
                     system.getNeurons().map(neuron => neuron.getId())
                 )
+                this.isNewSystem = false
+            }
+
+            if (!simulator.isSimulating()) {
+                simulator.setSimulating(true)
+                uiView.setPanelButtonsEnabled(false)
             }
 
             if (isPlayBtn) {
@@ -469,7 +484,7 @@ export class Presenter {
             }
         })
         uiView.handleStopBtn(() => {
-            console.log('Compute')
+            console.time('Compute')
 
             if (!simulator.isSimulating())
                 return
@@ -487,7 +502,7 @@ export class Presenter {
             uiView.setPanelButtonsEnabled(true)
         })
         uiView.handleNextBtn(() => {
-            console.log('Compute')
+            console.time('Compute')
             // Disable simulator buttons to prevent multiple clicks
             uiView.setSimulatorButton('prev-btn', true)
             uiView.setSimulatorButton('next-btn', true)
@@ -496,13 +511,16 @@ export class Presenter {
 
             // If not yet simulating, set up the simulator with the system
             // and start simulating')
-            if (!simulator.isSimulating()) {
+            if (this.isNewSystem) {
                 simulator.setSystem(system)
-                simulator.setSimulating(true)
-                uiView.setPanelButtonsEnabled(false)
                 uiView.setDecisionHistoryHeader(
                     system.getNeurons().map(neuron => neuron.getId())
                 )
+                this.isNewSystem = false
+            }
+            if (!simulator.isSimulating()) {
+                simulator.setSimulating(true)
+                uiView.setPanelButtonsEnabled(false)
             }
 
             // If currently on auto, stop it
