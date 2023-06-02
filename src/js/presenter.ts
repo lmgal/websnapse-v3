@@ -573,6 +573,9 @@ export class Presenter {
             } else if (id.length > 8) {
                 hasError = true
                 error.id = 'ID must be at most 8 characters'
+            } else if (system.getNeuronById(id)) {
+                hasError = true
+                error.id = 'Cannot have duplicate ID'
             }
 
             switch (type) {
