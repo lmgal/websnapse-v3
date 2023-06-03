@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import autoprefixer from 'autoprefixer'
 import nested from 'postcss-nested'
 import simpleVars from 'postcss-simple-vars'
+import removeConsole from 'vite-plugin-remove-console'
 
 export default defineConfig({
   build: {
@@ -20,7 +21,5 @@ export default defineConfig({
     extensions: ['.ts', '.js'],
   },
   assetsInclude: ['**/*.glsl'],
-  // esbuild: {
-  //   drop: ['console', 'debugger']
-  // }
+  plugins: [removeConsole()]
 })
