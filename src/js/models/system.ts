@@ -154,28 +154,28 @@ export class SNPSystemModel {
             }
         }
 
-        return new Int8Array(matrix)
+        return new Int16Array(matrix)
     }
 
     public getDelayVector(){
-        return new Int8Array(
+        return new Int16Array(
             this.neurons.map(neuron => neuron.getRules().map(rule => rule.delay))
                 .reduce((delayVector, neuronDelays) => delayVector.concat(neuronDelays))
         )
     }
 
     public getRuleCountVector(){
-        return new Int8Array(
+        return new Int16Array(
             this.neurons.map(neuron => neuron.getRules().length)
         )
     }
 
     public getInitialConfigurationVector(){
-        return new Int8Array(this.neurons.map((neuron) => neuron.getSpikes() ?? 0))
+        return new Int16Array(this.neurons.map((neuron) => neuron.getSpikes() ?? 0))
     }
 
     public getInitialDelayStatusVector(){
-        return new Int8Array(this.getNeurons().map(_ => 0))
+        return new Int16Array(this.getNeurons().map(_ => 0))
     }
 
     // TODO: Fix this
@@ -199,7 +199,7 @@ export class SNPSystemModel {
                 }
             }
 
-            return new Int8Array(spikeTrainVector)
+            return new Int16Array(spikeTrainVector)
         })
     }
 

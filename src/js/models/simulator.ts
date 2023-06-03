@@ -4,8 +4,8 @@ import SNPModule from '../wasm/sn-p-system'
 import getRandomArrayValue from "../util/get-random-array-value"
 import { INPUT_NEURON, Neuron, OUTPUT_NEURON } from "./neuron"
 
-type WasmInt8Array = {
-    data: Int8Array
+type WasmInt16Array = {
+    data: Int16Array
     offset: number
 }
 
@@ -47,39 +47,38 @@ export class SimulatorModel {
     private nextInterval: ReturnType<typeof setInterval> | null = null
     private isFirstSetup = true
     // System vector definition
-    private transposedSpikingTransitionMatrix!: WasmInt8Array
-    private initialConfigurationVector!: Int8Array
-    private delayVector!: WasmInt8Array
-    private ruleCountVector!: WasmInt8Array
-    private spikeTrainVectors!: Array<Int8Array>
+    private transposedSpikingTransitionMatrix!: WasmInt16Array
+    private initialConfigurationVector!: Int16Array
+    private delayVector!: WasmInt16Array
+    private ruleCountVector!: WasmInt16Array
+    private spikeTrainVectors!: Array<Int16Array>
     // States
-    private configurationVector!: WasmInt8Array
-    private delayStatusVector!: WasmInt8Array
-    private firingVector!: WasmInt8Array
-    private delayIndicatorVector!: WasmInt8Array
-    private neuronUpdateVector!: WasmInt8Array
-    private synapseUpdateVector!: WasmInt8Array
+    private configurationVector!: WasmInt16Array
+    private delayStatusVector!: WasmInt16Array
+    private firingVector!: WasmInt16Array
+    private delayIndicatorVector!: WasmInt16Array
+    private neuronUpdateVector!: WasmInt16Array
+    private synapseUpdateVector!: WasmInt16Array
     // Input to get next config
-    private decisionVector!: WasmInt8Array
-    private spikeTrainVector!: WasmInt8Array
+    private decisionVector!: WasmInt16Array
+    private spikeTrainVector!: WasmInt16Array
     // History
     private time = 0
-    private decisionVectorStack: Array<Int8Array> = []
-    private delayIndicatorVectorStack: Array<Int8Array> = []
-    private firingVectorStack: Array<Int8Array>
+    private decisionVectorStack: Array<Int16Array> = []
+    private delayIndicatorVectorStack: Array<Int16Array> = []
+    private firingVectorStack: Array<Int16Array>
     private outputSpikeTrains: Map<number, Array<number>> = new Map()
     // Binding callback functions
-    private onChange: (configurationVector: Int8Array, delayStatusVector: Int8Array,
-        firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>, 
-        decisionVectorStack: Array<Int8Array>, neuronUpdateVector: Int8Array, 
-        synapseUpdateVector: Int8Array) => void = () => { }
-    private onDecisionNeed: (configurationVector: Int8Array, delayStatusVector: Int8Array) => void = () => {}
+    private onChange: (configurationVector: Int16Array, delayStatusVector: Int16Array,
+        firingVector: Int16Array, outputSpikeTrains: Map<number, Array<number>>, 
+        decisionVectorStack: Array<Int16Array>, neuronUpdateVector: Int16Array, 
+        synapseUpdateVector: Int16Array) => void = () => { }
+    private onDecisionNeed: (configurationVector: Int16Array, delayStatusVector: Int16Array) => void = () => {}
 
     public constructor() {
         SNPModule().then((module: SNPSystemModule) => {
             this.module = module
         })
-
     }
 
     public setSystem(system: SNPSystemModel) {
@@ -87,30 +86,35 @@ export class SimulatorModel {
             this._free()
         }
 
-        const wasmMalloc = (array: Int8Array): WasmInt8Array => {
-            const offset = this.module._malloc(array.length * Int8Array.BYTES_PER_ELEMENT)
-            this.module.HEAP8.set(array, offset)
+        const wasmInt16Malloc = (array: Int16Array): WasmInt16Array => {
+            const offset = this.module._malloc(array.length * Int16Array.BYTES_PER_ELEMENT)
+            this.module.HEAP16.set(array, offset / Int16Array.BYTES_PER_ELEMENT)
             return {
-                data: this.module.HEAP8.subarray(offset, offset + array.length) as Int8Array,
+                data: this.module.HEAP16.subarray(
+                    offset / Int16Array.BYTES_PER_ELEMENT, 
+                    offset / Int16Array.BYTES_PER_ELEMENT + array.length
+                ) as Int16Array,
                 offset: offset as number
             }
         }
 
-        this.transposedSpikingTransitionMatrix = wasmMalloc(system.getTransposedSpikingTransitionMatrix())
+        this.transposedSpikingTransitionMatrix = wasmInt16Malloc(
+            system.getTransposedSpikingTransitionMatrix()
+        )
 
         this.initialConfigurationVector = system.getInitialConfigurationVector()
-        this.delayVector = wasmMalloc(system.getDelayVector())
-        this.ruleCountVector = wasmMalloc(system.getRuleCountVector())
+        this.delayVector = wasmInt16Malloc(system.getDelayVector())
+        this.ruleCountVector = wasmInt16Malloc(system.getRuleCountVector())
 
-        this.configurationVector = wasmMalloc(this.initialConfigurationVector)
-        this.delayStatusVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
-        this.firingVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
-        this.delayIndicatorVector = wasmMalloc(this.delayVector.data.map(_ => 0))
-        this.neuronUpdateVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
-        this.synapseUpdateVector = wasmMalloc(this.initialConfigurationVector.map(_ => 0))
+        this.configurationVector = wasmInt16Malloc(this.initialConfigurationVector)
+        this.delayStatusVector = wasmInt16Malloc(this.initialConfigurationVector.map(_ => 0))
+        this.firingVector = wasmInt16Malloc(this.initialConfigurationVector.map(_ => 0))
+        this.delayIndicatorVector = wasmInt16Malloc(this.delayVector.data.map(_ => 0))
+        this.neuronUpdateVector = wasmInt16Malloc(this.initialConfigurationVector.map(_ => 0))
+        this.synapseUpdateVector = wasmInt16Malloc(this.initialConfigurationVector.map(_ => 0))
 
-        this.decisionVector = wasmMalloc(new Int8Array(system.getRuleCount()))
-        this.spikeTrainVector = wasmMalloc(new Int8Array(system.getRuleCount()))
+        this.decisionVector = wasmInt16Malloc(new Int16Array(system.getRuleCount()))
+        this.spikeTrainVector = wasmInt16Malloc(new Int16Array(system.getRuleCount()))
         this.spikeTrainVectors = system.getSpikeTrainVectors()
 
         this.time = 0
@@ -131,7 +135,7 @@ export class SimulatorModel {
      * the simulator is not paused, and the simulator is not at the end of the simulation.
      * @param decisionVector 
      */
-    public next(decisionVector: Int8Array) {
+    public next(decisionVector: Int16Array) {
         this.decisionVectorStack.push(decisionVector)
         this.delayIndicatorVectorStack.push(this.delayIndicatorVector.data.slice())
 
@@ -310,7 +314,7 @@ export class SimulatorModel {
             }))
         })
 
-        return new Int8Array(decisionVector)
+        return new Int16Array(decisionVector)
     }
 
     public startAutoRandomSimulation(neurons: Array<Neuron>) {

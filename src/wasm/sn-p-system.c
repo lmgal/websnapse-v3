@@ -23,12 +23,12 @@
  * @param neuronCount
  */
 void getIndicatorVector(
-    int8_t indicatorVector[],
-    int8_t nextDelayStatusVector[],
-    int8_t decisionVector[],
-    int8_t delayIndicatorVector[],
-    int8_t delayVector[],
-    int8_t ruleCountVector[],
+    int16_t indicatorVector[],
+    int16_t nextDelayStatusVector[],
+    int16_t decisionVector[],
+    int16_t delayIndicatorVector[],
+    int16_t delayVector[],
+    int16_t ruleCountVector[],
     int neuronCount)
 {
     int ruleIndex = 0;
@@ -56,17 +56,17 @@ void getIndicatorVector(
  * @param neuronCount
  */
 void getFiringVector(
-    int8_t firingVector[],
-    int8_t synapseUpdateVector[],
-    int8_t indicatorVector[],
-    int8_t spikeTrainVector[],
-    int8_t ruleCountVector[],
+    int16_t firingVector[],
+    int16_t synapseUpdateVector[],
+    int16_t indicatorVector[],
+    int16_t spikeTrainVector[],
+    int16_t ruleCountVector[],
     int neuronCount)
 {
     int ruleIndex = 0;
     for (int i = 0; i < neuronCount; i++)
     {
-        int8_t oldFiring = firingVector[i];
+        int16_t oldFiring = firingVector[i];
 
         firingVector[i] = 0;
         for (int j = 0; j < ruleCountVector[i]; j++)
@@ -95,10 +95,10 @@ void getFiringVector(
  * @param ruleCount
  */
 void getNextDelayIndicatorVector(
-    int8_t delayIndicatorVector[],
-    int8_t indicatorVector[],
-    int8_t decisionVector[],
-    int8_t delayVector[],
+    int16_t delayIndicatorVector[],
+    int16_t indicatorVector[],
+    int16_t decisionVector[],
+    int16_t delayVector[],
     int ruleCount)
 {
     for (int i = 0; i < ruleCount; i++)
@@ -119,17 +119,17 @@ void getNextDelayIndicatorVector(
  * @param neuronCount
  */
 void getNextDelayStatusVector(
-    int8_t delayStatusVector[],
-    int8_t neuronUpdateVector[],
-    int8_t delayVector[],
-    int8_t ruleCountVector[],
-    int8_t decisionVector[],
+    int16_t delayStatusVector[],
+    int16_t neuronUpdateVector[],
+    int16_t delayVector[],
+    int16_t ruleCountVector[],
+    int16_t decisionVector[],
     int neuronCount)
 {
     int ruleIndex = 0;
     for (int i = 0; i < neuronCount; i++)
     {
-        int8_t delay = 0;
+        int16_t delay = 0;
         for (int j = 0; j < ruleCountVector[i]; j++)
         {
             if (decisionVector[ruleIndex + j])
@@ -139,7 +139,7 @@ void getNextDelayStatusVector(
             }
         }
 
-        int8_t newDelayStatus = delayStatusVector[i] > 0 ? delayStatusVector[i] - 1 : delay;
+        int16_t newDelayStatus = delayStatusVector[i] > 0 ? delayStatusVector[i] - 1 : delay;
 
         neuronUpdateVector[i] = newDelayStatus != delayStatusVector[i];
         delayStatusVector[i] = newDelayStatus;
@@ -161,24 +161,24 @@ void getNextDelayStatusVector(
  * @param neuronCount
  */
 void getNextConfigurationVector(
-    int8_t configurationVector[],
-    int8_t neuronUpdateVector[],
-    int8_t transposedTransitionMatrix[],
-    int8_t nextDelayStatusVector[],
-    int8_t indicatorVector[],
-    int8_t spikeTrainVector[],
+    int16_t configurationVector[],
+    int16_t neuronUpdateVector[],
+    int16_t transposedTransitionMatrix[],
+    int16_t nextDelayStatusVector[],
+    int16_t indicatorVector[],
+    int16_t spikeTrainVector[],
     int ruleCount,
     int neuronCount)
 {
     for (int i = 0; i < neuronCount; i++)
     {
-        int8_t netGain = 0;
+        int16_t netGain = 0;
         for (int j = 0; j < ruleCount; j++) 
         {
             netGain += ((indicatorVector[j] + spikeTrainVector[j]) 
                 * transposedTransitionMatrix[ruleCount * i + j]);
         }
-        int8_t nextStatus = nextDelayStatusVector[i] == 0;
+        int16_t nextStatus = nextDelayStatusVector[i] == 0;
 
         neuronUpdateVector[i] = neuronUpdateVector[i] || (
             nextStatus * netGain != 0
@@ -205,17 +205,17 @@ void getNextConfigurationVector(
  * @param neuronCount
  */
 void getNext(
-    int8_t configurationVector[],
-    int8_t delayStatusVector[],
-    int8_t firingVector[],
-    int8_t neuronUpdateVector[],
-    int8_t synapseUpdateVector[],
-    int8_t transposedTransitionMatrix[],
-    int8_t delayVector[],
-    int8_t ruleCountVector[],
-    int8_t decisionVector[],
-    int8_t delayIndicatorVector[],
-    int8_t spikeTrainVector[],
+    int16_t configurationVector[],
+    int16_t delayStatusVector[],
+    int16_t firingVector[],
+    int16_t neuronUpdateVector[],
+    int16_t synapseUpdateVector[],
+    int16_t transposedTransitionMatrix[],
+    int16_t delayVector[],
+    int16_t ruleCountVector[],
+    int16_t decisionVector[],
+    int16_t delayIndicatorVector[],
+    int16_t spikeTrainVector[],
     int ruleCount,
     int neuronCount)
 {
@@ -227,7 +227,7 @@ void getNext(
         decisionVector,
         neuronCount);
 
-    int8_t *indicatorVector = malloc(ruleCount * sizeof(int8_t));
+    int16_t *indicatorVector = malloc(ruleCount * sizeof(int16_t));
     getIndicatorVector(
         indicatorVector,
         delayStatusVector,
@@ -266,16 +266,16 @@ void getNext(
 }
 
 void getPrevDelayStatusVector(
-    int8_t delayStatusVector[],
-    int8_t neuronUpdateVector[],
-    int8_t prevDelayIndicatorVector[],
-    int8_t ruleCountVector[],
+    int16_t delayStatusVector[],
+    int16_t neuronUpdateVector[],
+    int16_t prevDelayIndicatorVector[],
+    int16_t ruleCountVector[],
     int neuronCount)
 {
     int ruleIndex = 0;
     for (int i = 0; i < neuronCount; i++)
     {
-        int8_t oldDelayStatus = delayStatusVector[i];
+        int16_t oldDelayStatus = delayStatusVector[i];
 
         for (int j = 0; j < ruleCountVector[i]; j++)
         {
@@ -296,24 +296,24 @@ void getPrevDelayStatusVector(
 }
 
 void getPrevConfigurationVector(
-    int8_t configurationVector[],
-    int8_t neuronUpdateVector[],
-    int8_t transposedTransitionMatrix[],
-    int8_t delayStatusVector[],
-    int8_t prevIndicatorVector[],
-    int8_t prevSpikeTrainVector[],
+    int16_t configurationVector[],
+    int16_t neuronUpdateVector[],
+    int16_t transposedTransitionMatrix[],
+    int16_t delayStatusVector[],
+    int16_t prevIndicatorVector[],
+    int16_t prevSpikeTrainVector[],
     int ruleCount,
     int neuronCount)
 {
     for (int i = 0; i < neuronCount; i++)
     {
-        int8_t netGain = 0;
+        int16_t netGain = 0;
         for (int j = 0; j < ruleCount; j++) 
         {
             netGain += ((prevIndicatorVector[j] + prevSpikeTrainVector[j]) 
                 * transposedTransitionMatrix[ruleCount * i + j]);
         }
-        int8_t status = delayStatusVector[i] == 0;
+        int16_t status = delayStatusVector[i] == 0;
 
         neuronUpdateVector[i] = status * netGain != 0;
         configurationVector[i] = configurationVector[i] - status * netGain;
@@ -321,20 +321,20 @@ void getPrevConfigurationVector(
 }
 
 void getPrev(
-    int8_t configurationVector[],
-    int8_t delayStatusVector[],
-    int8_t neuronUpdateVector[],
-    int8_t transposedTransitionMatrix[],
-    int8_t delayVector[],
-    int8_t ruleCountVector[],
-    int8_t prevDecisionVector[],
-    int8_t prevDelayIndicatorVector[],
-    int8_t prevSpikeTrainVector[],
+    int16_t configurationVector[],
+    int16_t delayStatusVector[],
+    int16_t neuronUpdateVector[],
+    int16_t transposedTransitionMatrix[],
+    int16_t delayVector[],
+    int16_t ruleCountVector[],
+    int16_t prevDecisionVector[],
+    int16_t prevDelayIndicatorVector[],
+    int16_t prevSpikeTrainVector[],
     int ruleCount,
     int neuronCount
 ) {
 
-    int8_t *indicatorVector = malloc(ruleCount * sizeof(int8_t));
+    int16_t *indicatorVector = malloc(ruleCount * sizeof(int16_t));
     getIndicatorVector(
         indicatorVector,
         delayStatusVector,

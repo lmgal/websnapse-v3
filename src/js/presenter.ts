@@ -83,10 +83,10 @@ export class Presenter {
         })
 
         // Bind simulator and graph view
-        simulator.handleChange(async (configurationVector: Int8Array, delayStatusVector: Int8Array,
-            firingVector: Int8Array, outputSpikeTrains: Map<number, Array<number>>,
-            decisionVectorStack: Int8Array[], neuronUpdateVector: Int8Array,
-            synapseUpdateVector: Int8Array) => {
+        simulator.handleChange(async (configurationVector: Int16Array, delayStatusVector: Int16Array,
+            firingVector: Int16Array, outputSpikeTrains: Map<number, Array<number>>,
+            decisionVectorStack: Int16Array[], neuronUpdateVector: Int16Array,
+            synapseUpdateVector: Int16Array) => {
 
             console.timeEnd('Compute')
             console.time('Render')
@@ -401,7 +401,7 @@ export class Presenter {
             const decisionVector = Array(system.getRuleCount()).fill(0).map((_, i) => {
                 return selectedIndices.includes(i) ? 1 : 0
             })
-            simulator.next(new Int8Array(decisionVector))
+            simulator.next(new Uint16Array(decisionVector))
             // Hide decision controls
             uiView.hideDecisionControls()
         })
