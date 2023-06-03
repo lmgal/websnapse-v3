@@ -456,3 +456,18 @@ span {
     from {bottom: $snackbar-bottom; opacity: 1;}
     to {bottom: $simulator-panel-height; opacity: 0;}
 }
+
+#loading-dialog {
+    height: 25%;
+
+    h1 {
+        font-size: 20px;
+        color: $text-color;
+    }
+}
+
+#loading-bar {
+    width: 0;
+    height: 30px;
+    background-color: #04AA6D;
+}

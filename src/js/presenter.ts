@@ -807,7 +807,7 @@ export class Presenter {
             return `${spike}^{${count}}`
     }
 
-    private async _handleImport(
+    private _handleImport(
         data: ReturnType<typeof SystemJSON.import>,
         system: SNPSystemModel,
         graphView: GraphView,
@@ -818,57 +818,83 @@ export class Presenter {
         system.setCallHandler(false) // Only for nodes
         graphView.beginUpdate()
 
-        await Promise.all(data.neurons.map(async (neuronJSON) => {
-            const builder = new NeuronBuilder(neuronJSON.type).setId(neuronJSON.id)
+        // Counter for loading state
+        const neuronCount = data.neurons.length
+        const synapseCount = data.synapses.length
 
-            if (neuronJSON.type === REG_NEURON) {
-                builder.setSpikes(neuronJSON.content as number)
-                // Parse rules
-                for (const latex of neuronJSON.rules!) {
-                    const parsedRule = parseRule(latex)
-                    if (parsedRule)
-                        builder.addRule(parsedRule)
-                    else
-                        throw new Error(`Invalid rule: ${latex}`)
+        setTimeout(() => {
+            uiView.showLoadingDialog()
+        }, 0)
+
+        const importJSON = (neuronIndex: number, synapseIndex: number) => {
+            if (neuronIndex < neuronCount) {
+                uiView.updateLoadingTitle('Importing neurons')
+                uiView.updateLoadingState(neuronIndex / neuronCount * 100)
+
+                const neuronJSON = data.neurons[neuronIndex]
+                const builder = new NeuronBuilder(neuronJSON.type).setId(neuronJSON.id)
+
+                if (neuronJSON.type === REG_NEURON) {
+                    builder.setSpikes(neuronJSON.content as number)
+                    // Parse rules
+                    for (const latex of neuronJSON.rules!) {
+                        const parsedRule = parseRule(latex)
+                        if (parsedRule)
+                            builder.addRule(parsedRule)
+                        else
+                            throw new Error(`Invalid rule: ${latex}`)
+                    }
+
+                    // Create node in graph view
+                    graphView.addNode(neuronJSON.id, {
+                        spikes: neuronJSON.content as number,
+                        rules: neuronJSON.rules!.join('\\\\'),
+                        delay: 0,
+                        pos: neuronJSON.pos
+                    })
+                } else if (neuronJSON.type === INPUT_NEURON) {
+                    const spikeTrain = this._stringToSpikeTrain(neuronJSON.content as string)
+                    if (!spikeTrain)
+                        throw new Error(`Invalid spike train: ${neuronJSON.content}`)
+                    builder.setSpikeTrain(spikeTrain)
+                    // Create node in graph view
+                    graphView.addNode(neuronJSON.id, {
+                        spikeTrain: this._spikeTrainToString(spikeTrain!),
+                        pos: neuronJSON.pos
+                    })
+                } else {
+                    // Create output node in graph view
+                    graphView.addNode(neuronJSON.id, {
+                        pos: neuronJSON.pos
+                    })
                 }
 
-                // Create node in graph view
-                graphView.addNode(neuronJSON.id, {
-                    spikes: neuronJSON.content as number,
-                    rules: neuronJSON.rules!.join('\\\\'),
-                    delay: 0,
-                    pos: neuronJSON.pos
-                })
-            } else if (neuronJSON.type === INPUT_NEURON) {
-                const spikeTrain = this._stringToSpikeTrain(neuronJSON.content as string)
-                if (!spikeTrain)
-                    throw new Error(`Invalid spike train: ${neuronJSON.content}`)
-                builder.setSpikeTrain(spikeTrain)
-                // Create node in graph view
-                graphView.addNode(neuronJSON.id, {
-                    spikeTrain: this._spikeTrainToString(spikeTrain!),
-                    pos: neuronJSON.pos
-                })
-            } else {
-                // Create output node in graph view
-                graphView.addNode(neuronJSON.id, {
-                    pos: neuronJSON.pos
-                })
-            }
+                system.addNeuron(builder.build())
 
-            system.addNeuron(builder.build())
-        }))
+                if (neuronIndex === neuronCount - 1)
+                    uiView.updateLoadingTitle('Importing synapses')
 
-        system.setCallHandler(true)
-        data.synapses.map(async (synapse) => {
-            system.addSynapse(
-                synapse.from,
-                synapse.to,
-                synapse.weight
-            )
-        })
+                setTimeout(importJSON, 0, neuronIndex + 1, synapseIndex)
+                return
+            } 
+            
+            if (synapseIndex < synapseCount) {
+                uiView.updateLoadingState(synapseIndex / synapseCount * 100)
 
-        graphView.endUpdate()
-        this.isSaved = true 
+                const synapseJSON = data.synapses[synapseIndex]
+                system.setCallHandler(true)
+                system.addSynapse(synapseJSON.from, synapseJSON.to, synapseJSON.weight)
+
+                setTimeout(importJSON, 0, neuronIndex, synapseIndex + 1)
+                return
+            } 
+
+            // Finish importing
+            this.isSaved = true 
+            uiView.hideLoadingDialog()
+            graphView.endUpdate()
+        }
+
+        importJSON(0, 0)
     }
 }

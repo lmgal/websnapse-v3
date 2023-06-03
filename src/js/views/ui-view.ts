@@ -84,6 +84,11 @@ export class UIView {
     private snackBar = document.getElementById('snackbar') as HTMLDivElement
     private snackBarText = document.getElementById('snackbar-text') as HTMLParagraphElement
 
+    // Loading dialog
+    private loadingDialog = document.getElementById('loading-dialog') as HTMLDialogElement
+    private loadingTitle = document.getElementById('loading-title') as HTMLHeadingElement
+    private loadingBar = document.getElementById('loading-bar') as HTMLDivElement
+
     public constructor() {
         // Convert necessary input to MathQuill input
         this.MQ.MathField(this.neuronId)
@@ -467,6 +472,37 @@ export class UIView {
         setTimeout(() => {
             this.snackBar.classList.remove('show')
         }, duration)
+    }
+
+    /**
+     * Show the loading dialog, resetting to 0
+     */
+    public showLoadingDialog() {
+        this.loadingBar.style.width = '0';
+        this.loadingDialog.showModal()
+    }
+
+    /**
+     * Update the title of the loading dialog
+     * @param title 
+     */
+    public updateLoadingTitle(title: string) {
+        this.loadingTitle.innerText = title
+    }
+
+    /**
+     * Update the state of the loading dialog
+     * @param percent 
+     */
+    public updateLoadingState(percent: number) {
+        this.loadingBar.style.width = `${percent}%`
+    }
+
+    /**
+     * Hide the loading dialog
+     */
+    public hideLoadingDialog() {
+        this.loadingDialog.close()
     }
 
     // Handler methods
