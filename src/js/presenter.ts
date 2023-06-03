@@ -401,7 +401,7 @@ export class Presenter {
             const decisionVector = Array(system.getRuleCount()).fill(0).map((_, i) => {
                 return selectedIndices.includes(i) ? 1 : 0
             })
-            simulator.next(new Uint16Array(decisionVector))
+            simulator.next(new Int16Array(decisionVector))
             // Hide decision controls
             uiView.hideDecisionControls()
         })
