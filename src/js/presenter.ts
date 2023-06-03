@@ -341,7 +341,7 @@ export class Presenter {
                 const file = (e.target as HTMLInputElement).files![0]
                 const reader = new FileReader()
 
-                reader.onload = (e) => {
+                reader.onload = async (e) => {
                     const data = SystemJSON.import((e.target as FileReader).result as string)
                     this._handleImport(data, system, graphView, uiView)
                 }
@@ -869,6 +869,6 @@ export class Presenter {
         })
 
         graphView.endUpdate()
+        this.isSaved = true 
     }
-
 }
