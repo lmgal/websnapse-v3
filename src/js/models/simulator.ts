@@ -319,6 +319,7 @@ export class SimulatorModel {
 
     public startAutoRandomSimulation(neurons: Array<Neuron>) {
         this.nextInterval = setInterval(() => {
+            console.time('Compute')
             if (this.hasReachedFinalConfiguration(neurons)) {
                 clearInterval(this.nextInterval!)
             } else {
