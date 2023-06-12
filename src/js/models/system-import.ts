@@ -95,8 +95,8 @@ export class SystemJSON {
         }
 
         return JSON.stringify({
-            nodes: neuronsJSON,
+            neurons: neuronsJSON,
             synapses: synapsesJSON
-        })
+        } as System)
     }
 }
