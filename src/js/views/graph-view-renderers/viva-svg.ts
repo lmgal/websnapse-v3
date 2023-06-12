@@ -24,9 +24,6 @@ export default class VivaSvgGraphView implements GraphView {
     private onEdgeRightClick: (fromId: string, toId: string, x: number, y: number) => void = () => { }
 
     public constructor() {
-        this.graph.forEachLink((link) => {
-            console.log(link)
-        })
         this.graphics.node(((node: Viva.Node<NodeData>) => {
             const ui = Viva.Graph.svg('g')
 
@@ -297,6 +294,7 @@ export default class VivaSvgGraphView implements GraphView {
      */
     public reset(){
         this.graph.clear()
+        this.renderer.reset()
     }
 
     /**

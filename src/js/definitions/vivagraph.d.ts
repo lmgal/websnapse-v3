@@ -93,6 +93,7 @@ declare module 'vivagraphjs' {
         run() : void
         reset() : void
         rerender() : void
+        moveTo(x: number, y: number) : void
     }
 
     export namespace Graph {
