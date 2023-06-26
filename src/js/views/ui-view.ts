@@ -49,7 +49,6 @@ export class UIView {
     private neuronSpikesError = document.getElementById('neuron-spikes-error') as HTMLSpanElement
     private neuronSpikeTrainError = document.getElementById('neuron-spike-train-error') as HTMLSpanElement
 
-
     // Synapse properties
     private synapseProperties = document.getElementById('synapse-properties') as HTMLDialogElement
     private synapsePropertiesTitle = document.getElementById('synapse-properties-title') as HTMLHeadingElement
@@ -93,6 +92,14 @@ export class UIView {
         // Convert necessary input to MathQuill input
         this.MQ.MathField(this.neuronId)
         this.MQ.MathField(this.neuronSpikeTrain)
+        
+        // Render all latex in html
+        const latexList = document.getElementsByTagName('latex') as HTMLCollectionOf<HTMLElement>
+        for (const li of latexList) {
+            katex.render(li.innerHTML, li, {
+                output: 'mathml'
+            })
+        }
     }
 
     // Interface methods
