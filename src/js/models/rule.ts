@@ -38,7 +38,6 @@ export const parseRule = (input: string) : Rule | null => {
         consume = 1
     } else if (groups[1] && groups[1].slice(2).length) {
         // a^{n} or a^n
-        console.log(groups[1])
         if (groups[1].includes('{'))
             consume = Number.parseInt(groups[1].slice(3, -1))
         else
