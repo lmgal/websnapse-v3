@@ -43,7 +43,6 @@ export const parseRule = (input: string) : Rule | null => {
             consume = Number.parseInt(groups[1].slice(3, -1))
         else
             consume = Number.parseInt(groups[1].slice(2))
-        console.log(consume)
     } else {
         // a
         consume = 1
