@@ -737,6 +737,9 @@ export class Presenter {
     }
 
     private _stringToSpikeTrain(latexString: string) {
+        if (latexString.length === 0)
+            return []
+
         const regex = /(\d)(\^(\d|\{(\d+)\}))?/g;
         const matches = latexString.matchAll(regex);
 
