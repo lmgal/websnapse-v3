@@ -128,6 +128,12 @@ export class SimulatorModel {
         
         this.simulating = true
         this.isFirstSetup = false
+
+        // Console log for debugging
+        console.log('transposedSpikingTransitionMatrix', this.transposedSpikingTransitionMatrix)
+        console.log('initialConfigurationVector', this.initialConfigurationVector)
+        console.log('delayVector', this.delayVector)
+        console.log('ruleCountVector', this.ruleCountVector)
     }
 
     /**

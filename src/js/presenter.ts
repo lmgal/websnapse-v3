@@ -88,6 +88,15 @@ export class Presenter {
             decisionVectorStack: Int16Array[], neuronUpdateVector: Int16Array,
             synapseUpdateVector: Int16Array) => {
 
+            // Console log for debugging
+            console.log('configurationVector', configurationVector)
+            console.log('delayStatusVector', delayStatusVector)
+            console.log('firingVector', firingVector)
+            console.log('outputSpikeTrains', outputSpikeTrains)
+            console.log('decisionVectorStack', decisionVectorStack)
+            console.log('neuronUpdateVector', neuronUpdateVector)
+            console.log('synapseUpdateVector', synapseUpdateVector)
+
             // Change neuron states
             const renderNeuronUpdate = async () => {
                 for (let i = 0; i < configurationVector.length; i++) {
