@@ -324,6 +324,11 @@ export class Presenter {
                 simulator.setSimulating(false)
                 uiView.setPanelButtonsEnabled(true)
                 this.isNewSystem = true
+                // Enable simulator buttons
+                uiView.setSimulatorButton('prev-btn', false)
+                uiView.setSimulatorButton('next-btn', false)
+                uiView.setSimulatorButton('stop-btn', false)
+                uiView.setSimulatorButton('play-pause-btn', false)
             }
 
             // Open file dialog
@@ -436,7 +441,7 @@ export class Presenter {
             if (!simulator.isSimulating())
                 return
 
-            // Disable simulator buttons to prevent multiple clicks
+            // Enable simulator buttons
             uiView.setSimulatorButton('prev-btn', true)
             uiView.setSimulatorButton('next-btn', true)
             uiView.setSimulatorButton('stop-btn', true)
