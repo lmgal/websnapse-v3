@@ -88,6 +88,9 @@ export class Presenter {
             decisionVectorStack: Int16Array[], neuronUpdateVector: Int16Array,
             synapseUpdateVector: Int16Array) => {
 
+            console.timeEnd('compute')
+            console.time('render')
+
             // Change neuron states
             const renderNeuronUpdate = async () => {
                 for (let i = 0; i < configurationVector.length; i++) {
@@ -198,6 +201,8 @@ export class Presenter {
             // Enable stop button since it was previously disabled 
             // to prevent multiple clicks
             uiView.setSimulatorButton('stop-btn', false)
+
+            console.timeEnd('render')
         })
 
         // Handle events from graph view

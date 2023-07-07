@@ -136,6 +136,9 @@ export class SimulatorModel {
      * @param decisionVector 
      */
     public next(decisionVector: Int16Array) {
+        // Computation time
+        console.time('compute')
+
         this.decisionVectorStack.push(decisionVector)
         this.delayIndicatorVectorStack.push(this.delayIndicatorVector.data.slice())
 
