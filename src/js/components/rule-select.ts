@@ -63,7 +63,8 @@ export class RuleSelectBuilder {
             })
 
             katex.render(latex, item, {
-                throwOnError: false
+                throwOnError: false,
+                output: 'mathml'
             })
 
             list.appendChild(item)
@@ -94,7 +95,8 @@ export class RuleSelectBuilder {
         const dropDownToggle = this.ruleSelect.querySelector('.drop-down-toggle') as HTMLDivElement
         dropDownToggle.setAttribute('data-selected', value)
         katex.render(option, dropDownToggle, {
-            throwOnError: false
+            throwOnError: false,
+            output: 'mathml'
         })
     }
 
